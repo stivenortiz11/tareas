@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Organizador de tareas</title>
+<title>Mis Tareas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -311,7 +311,7 @@ select { cursor: pointer; }
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
       </div>
       <div>
-        <h1>Organizador de tareas</h1>
+        <h1>Mis Tareas</h1>
         <p>Universidad y trabajo, con tiempo y progreso</p>
       </div>
     </div>
@@ -469,6 +469,7 @@ select { cursor: pointer; }
 
   // Drive
   var driveToken = null;
+  var driveTokenExp = 0;
   var driveTokenClient = null;
   var driveFileId = null;
   var driveSaveTimer = null;
@@ -901,6 +902,7 @@ select { cursor: pointer; }
       callback: function (resp) {
         if (resp && resp.access_token) {
           driveToken = resp.access_token;
+          driveTokenExp = Date.now() + (resp.expires_in ? resp.expires_in * 1000 : 3300000) - 60000;
           try { localStorage.setItem(CONN_KEY, "1"); } catch (e) {}
           setDriveLabel("Sincronizando...");
           syncWithDrive();
@@ -960,16 +962,46 @@ select { cursor: pointer; }
     });
   }
 
+  // Devuelve un token válido, renovándolo en silencio si venció (sin pedir login otra vez).
+  function ensureToken() {
+    if (driveToken && Date.now() < driveTokenExp) return Promise.resolve(driveToken);
+    return new Promise(function (resolve, reject) {
+      if (!ensureTokenClient()) { reject(new Error("Google no cargó")); return; }
+      var prev = driveTokenClient.callback;
+      driveTokenClient.callback = function (r) {
+        driveTokenClient.callback = prev;
+        if (r && r.access_token) {
+          driveToken = r.access_token;
+          driveTokenExp = Date.now() + (r.expires_in ? r.expires_in * 1000 : 3300000) - 60000;
+          try { localStorage.setItem(CONN_KEY, "1"); } catch (e) {}
+          resolve(driveToken);
+        } else {
+          reject(new Error("no se pudo renovar el acceso"));
+        }
+      };
+      try { driveTokenClient.requestAccessToken({ prompt: "" }); }
+      catch (e) { driveTokenClient.callback = prev; reject(e); }
+    });
+  }
+
+  function driveFetch(url, opts) {
+    return ensureToken().then(function (token) {
+      opts = opts || {};
+      opts.headers = Object.assign({ Authorization: "Bearer " + token }, opts.headers || {});
+      return fetch(url, opts);
+    });
+  }
+
   function findDriveFile() {
     if (driveFileId) return Promise.resolve(driveFileId);
     var q = encodeURIComponent("name='" + DRIVE_FILE_NAME + "' and trashed=false");
-    return fetch("https://www.googleapis.com/drive/v3/files?q=" + q + "&spaces=drive&fields=files(id,name)", { headers: driveHeaders() })
+    return driveFetch("https://www.googleapis.com/drive/v3/files?q=" + q + "&spaces=drive&fields=files(id,name)")
       .then(function (r) { return r.json(); })
       .then(function (d) { return d.files && d.files.length ? d.files[0].id : null; });
   }
 
   function loadDriveFile() {
-    return fetch("https://www.googleapis.com/drive/v3/files/" + driveFileId + "?alt=media", { headers: driveHeaders() })
+    return driveFetch("https://www.googleapis.com/drive/v3/files/" + driveFileId + "?alt=media")
       .then(function (r) { return r.json(); })
       .then(function (data) {
         if (Array.isArray(data)) tasks = data;
@@ -987,9 +1019,9 @@ select { cursor: pointer; }
       JSON.stringify(meta) + "\r\n" +
       "--" + boundary + "\r\nContent-Type: application/json\r\n\r\n" +
       JSON.stringify(tasks) + "\r\n--" + boundary + "--";
-    return fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id", {
+    return driveFetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id", {
       method: "POST",
-      headers: { Authorization: "Bearer " + driveToken, "Content-Type": "multipart/related; boundary=" + boundary },
+      headers: { "Content-Type": "multipart/related; boundary=" + boundary },
       body: body
     }).then(function (r) { return r.json(); }).then(function (d) {
       driveFileId = d.id;
@@ -1002,18 +1034,19 @@ select { cursor: pointer; }
     driveSaveTimer = setTimeout(pushToDrive, 1200);
   }
   function pushToDrive() {
-    if (!driveToken || !driveFileId) return;
-    fetch("https://www.googleapis.com/upload/drive/v3/files/" + driveFileId + "?uploadType=media", {
+    if (!driveFileId) return;
+    driveFetch("https://www.googleapis.com/upload/drive/v3/files/" + driveFileId + "?uploadType=media", {
       method: "PATCH",
-      headers: { Authorization: "Bearer " + driveToken, "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(tasks)
     }).then(function (r) {
-      if (r.status === 401) {
-        driveToken = null;
-        setDriveLabel("Reconectar Drive");
-        if (gated) showGate("Tu sesión expiró. Entra de nuevo.");
-      }
-    }).catch(function (e) { console.error(e); });
+      if (!r.ok) setDriveLabel("Error al guardar");
+      else setDriveLabel("Drive conectado");
+    }).catch(function (e) {
+      console.error(e);
+      // Si de plano no se pudo renovar el acceso, ahí sí pedimos entrar de nuevo.
+      if (gated && !driveToken) showGate("Tu sesión expiró. Entra de nuevo.");
+    });
   }
 
   // ---- Pantallazo con OCR (en el navegador, sin servidor ni licencias) ----
@@ -1101,6 +1134,13 @@ select { cursor: pointer; }
   window.addEventListener("beforeunload", function () {
     tasks.forEach(function (t) { if (t.running) { t.seconds = elapsed(t); t.running = null; } });
     save();
+  });
+
+  // Al volver a la pestaña, renueva el acceso en silencio para no cerrar la sesión.
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden && gated && driveFileId) {
+      ensureToken().catch(function () {});
+    }
   });
 
   // Arranque: con Client ID exigimos login (puerta); sin él, modo local.

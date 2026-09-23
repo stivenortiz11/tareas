@@ -1,4 +1,4 @@
-# Organizador de tareas
+# Mis Tareas
 
 Una app para organizar tus tareas de universidad y de trabajo en un mismo lugar. Registra el tiempo que dedicas, lleva el control del avance y te avisa de lo que se vence. Es un sitio estático: un solo `index.html`, sin servidor propio. Funciona sola y no depende de Claude ni de ninguna licencia.
 
