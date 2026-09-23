@@ -1,0 +1,5 @@
+# La app es un sitio estático: un solo index.html, sin servidor ni funciones.
+# Para desplegar en Netlify basta con publicar esta carpeta.
+
+[build]
+  publish = "."
