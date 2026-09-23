@@ -1120,37 +1120,68 @@ select { cursor: pointer; }
   // Heurísticas simples para rellenar la tarea a partir del texto leído.
   function fillFromText(text) {
     var lines = text.split("\n").map(function (l) { return l.trim(); }).filter(Boolean);
+    var low = text.toLowerCase();
 
     // Fecha límite: primero la que sigue a "Cierre/Entrega/Vence/Límite".
     var due = findDueDate(text);
     if (due) form.fDue.value = due;
 
-    // Título: la primera línea "de verdad" (no basura, no migas de pan, no fecha).
-    var title = "";
-    for (var i = 0; i < lines.length; i++) {
-      var ln = lines[i];
-      if (ln.length < 12) continue;                                   // muy corta (ej: "o)")
-      if (/[>›»]/.test(ln)) continue;                                 // migas de pan
-      if (/^[\W_]+$/.test(ln)) continue;                              // solo símbolos
-      if (/^(apertura|cierre|entrega|fecha|vence|hasta)\b/i.test(ln)) continue;
-      if (/\b\d{1,2}\s+de\s+[a-záéíóú]+\s+de\s+\d{4}\b/i.test(ln)) continue; // línea de fecha
-      title = ln; break;
-    }
-    if (!title && lines.length) title = lines[0];
-    title = dedupe(title).slice(0, 100);
+    // Título: 1) el "Asunto"/"Re:" de un correo; 2) la primera línea de verdad.
+    var title = subjectTitle(lines) || firstRealLine(lines) || (lines[0] || "");
+    title = cleanTitle(dedupe(title)).slice(0, 100);
     form.fTitle.value = title;
 
     // Detalle: el resto, quitando la línea que quedó como título.
-    var desc = lines.filter(function (l) { return l.length > 1 && dedupe(l).slice(0, 100) !== title; }).join("\n");
-    form.fDesc.value = desc.slice(0, 1200);
+    var desc = lines.filter(function (l) { return l.length > 1 && cleanTitle(dedupe(l)).slice(0, 100) !== title; }).join("\n");
+    form.fDesc.value = desc.slice(0, 1400);
 
-    var low = text.toLowerCase();
-    if (/\b(clase|profesor|profesora|universidad|examen|parcial|semestre|c[aá]tedra|materia|laboratorio|ensayo|tesis|taller|aula|corte)\b/.test(low)) {
-      form.fCat.value = "universidad";
-    } else if (/\b(trabajo|jefe|reuni[oó]n|cliente|reporte|informe|oficina|proyecto|equipo)\b/.test(low)) {
-      form.fCat.value = "trabajo";
+    // Categoría por puntaje: cuenta señales de universidad vs. trabajo y gana la mayor.
+    var uniKW = low.match(/\b(clase|profesor|profesora|universidad|examen|parcial|semestre|c[aá]tedra|materia|laboratorio|ensayo|tesis|taller|aula|corte|docente|sustentaci[oó]n)\b/g) || [];
+    var workKW = low.match(/\b(pqr|ticket|requerimiento|soporte|cliente|factura|cuenta contable|contable|odoo|egresos|recibos|asunto|remitente|coordinador|auxiliar|woden|colaborador|etapa|solicito|cordialmente|saludos cordiales|reporte|informe|oficina|jefe|reuni[oó]n)\b/g) || [];
+    if (/\[ext\]/.test(low)) workKW.push("ext");
+    if (workKW.length > uniKW.length) form.fCat.value = "trabajo";
+    else if (uniKW.length > workKW.length) form.fCat.value = "universidad";
+
+    // Prioridad: lee "Prioridad baja/media/alta" o palabras de urgencia.
+    var pm = low.match(/prioridad\s+(alta|media|baja)/);
+    if (pm) form.fPrio.value = pm[1];
+    else if (/\b(urgente|inmediato|prioridad alta|importante|hoy)\b/.test(low)) form.fPrio.value = "alta";
+  }
+
+  // Busca el asunto de un correo (línea "Asunto:" o que empieza por "Re:/Fwd:").
+  function subjectTitle(lines) {
+    for (var i = 0; i < lines.length; i++) {
+      var m = lines[i].match(/^\s*(asunto|subject)\s*:?\s*(.+)$/i);
+      if (m && m[2].trim().length > 2) return m[2].trim();
+      if (/^\s*(re|rv|fwd|fw)\s*:/i.test(lines[i])) return lines[i];
     }
-    if (/\b(urgente|hoy|inmediato|prioridad alta|importante)\b/.test(low)) form.fPrio.value = "alta";
+    return "";
+  }
+
+  // Primera línea "de verdad": ni basura, ni migas de pan, ni etiqueta de formulario, ni saludo.
+  function firstRealLine(lines) {
+    for (var i = 0; i < lines.length; i++) {
+      var ln = lines[i];
+      if (ln.length < 8) continue;
+      if (/[>›»]/.test(ln)) continue;                                   // migas de pan
+      if (/^[\W_]+$/.test(ln)) continue;                                // solo símbolos
+      if (/@/.test(ln) && ln.split(" ").length <= 3) continue;          // correo suelto
+      if (/^(apertura|cierre|entrega|fecha|vence|hasta)\b/i.test(ln)) continue;
+      if (/^(tk|nivel|pa[ií]s|prioridad|tipo|categor[ií]a|clasificaci[oó]n|m[eé]todo|tat|equipo|cliente|correo|tel[eé]fono|asignado|nombre|para|de|cc|para:|asunto)\b/i.test(ln) && ln.length < 32) continue;
+      if (/^(buenos d[ií]as|buenas|estimad|hola|cordial|saludos|atentamente|gracias|quedo|quedamos)\b/i.test(ln)) continue;
+      if (/\b\d{1,2}\s+de\s+[a-záéíóú]+\s+de\s+\d{4}\b/i.test(ln)) continue; // línea de fecha
+      return ln;
+    }
+    return "";
+  }
+
+  // Quita prefijos de correo (Re:, Fwd:) y etiquetas tipo [EXT] al inicio del título.
+  function cleanTitle(s) {
+    var out = s || "";
+    for (var i = 0; i < 4; i++) {
+      out = out.replace(/^\s*(re|rv|fwd|fw)\s*:\s*/i, "").replace(/^\s*\[[^\]]*\]\s*/, "");
+    }
+    return out.trim();
   }
 
   // El OCR a veces repite la frase ("Taller X desde la Taller X desde la ..."). La colapsamos.
