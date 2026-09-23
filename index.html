@@ -1131,8 +1131,16 @@ select { cursor: pointer; }
     title = cleanTitle(dedupe(title)).slice(0, 100);
     form.fTitle.value = title;
 
-    // Detalle: el resto, quitando la línea que quedó como título.
-    var desc = lines.filter(function (l) { return l.length > 1 && cleanTitle(dedupe(l)).slice(0, 100) !== title; }).join("\n");
+    // Detalle: el resto, quitando el título y las líneas que son puro garabato del OCR.
+    var desc = lines.filter(function (l) {
+      if (cleanTitle(dedupe(l)).slice(0, 100) === title) return false;
+      var nonspace = l.replace(/\s/g, "").length;
+      if (nonspace <= 3) return false;                                  // fragmentos sueltos
+      var letters = (l.match(/[a-záéíóúñ]/gi) || []).length;
+      if (letters / nonspace < 0.55) return false;                     // demasiados símbolos o números
+      if (isCrumbLine(l) || (l.match(/[—–|·•]/g) || []).length >= 2) return false;
+      return true;
+    }).join("\n");
     form.fDesc.value = desc.slice(0, 1400);
 
     // Categoría por puntaje: cuenta señales de universidad vs. trabajo y gana la mayor.
@@ -1160,22 +1168,20 @@ select { cursor: pointer; }
 
   // En sistemas web el nombre de la tarea suele estar en las migas de pan
   // (con > o /). Si ese mismo texto aparece además como encabezado, es el título.
+  function isCrumbLine(ln) { return /\s[>›»]\s/.test(ln) || (ln.match(/\s\/\s/g) || []).length >= 2; }
   function headingFromCrumbs(lines) {
-    var crumbs = [];
-    lines.forEach(function (ln, idx) {
-      var parts = null;
-      if (/\s[>›»]\s/.test(ln)) parts = ln.split(/\s[>›»]\s/);
-      else if ((ln.match(/\s\/\s/g) || []).length >= 2) parts = ln.split(/\s\/\s/);
-      if (parts && parts.length >= 2) parts.forEach(function (p) { crumbs.push({ t: cleanCrumb(p), i: idx }); });
-    });
-    for (var c = 0; c < crumbs.length; c++) {
-      var cc = crumbs[c];
-      if (cc.t.length < 8) continue;
-      if (/^[\w.\- ]*\d{3,}[\w.\- ]*$/.test(cc.t) && cc.t.split(" ").length <= 3) continue; // código de curso/ticket
-      for (var i = 0; i < lines.length; i++) {
-        if (i === cc.i || /\s[>›»]\s/.test(lines[i])) continue;
-        if (norm(cleanCrumb(lines[i])) === norm(cc.t)) return cc.t;
-      }
+    // Junta el texto de todas las migas de pan.
+    var crumbText = "";
+    lines.forEach(function (ln) { if (isCrumbLine(ln)) crumbText += " " + norm(ln); });
+    if (!crumbText) return "";
+    // Busca un encabezado normal cuyo texto también esté dentro de las migas.
+    for (var i = 0; i < lines.length; i++) {
+      var ln = lines[i];
+      if (isCrumbLine(ln)) continue;
+      var clean = cleanTitle(ln).trim();
+      if (clean.length < 10) continue;
+      if (/^[\W_]+$/.test(clean)) continue;
+      if (crumbText.indexOf(norm(clean)) > -1) return clean;
     }
     return "";
   }
@@ -1189,6 +1195,7 @@ select { cursor: pointer; }
       if (ln.length < 8) continue;
       if (/[>›»]/.test(ln)) continue;                                   // migas de pan (>)
       if ((ln.match(/\s\/\s/g) || []).length >= 2) continue;            // migas de pan (/)
+      if ((ln.match(/[—–|·•]/g) || []).length >= 2) continue;           // barra de menú
       if (/^[\W_]+$/.test(ln)) continue;                                // solo símbolos
       if (/@/.test(ln) && ln.split(" ").length <= 3) continue;          // correo suelto
       if (/^(apertura|cierre|entrega|fecha|vence|hasta)\b/i.test(ln)) continue;
