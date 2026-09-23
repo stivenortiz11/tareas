@@ -219,6 +219,18 @@ select { cursor: pointer; }
 .sub .sbox.on { background: var(--ok); border-color: var(--ok); }
 .sub .stext { flex: 1; word-break: break-word; }
 .sub.done .stext { text-decoration: line-through; color: var(--text-faint); }
+.checklist-head { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: var(--text-soft); margin-bottom: 4px; }
+.checklist-head span { color: var(--text); }
+.checklist-mini { flex: 1; height: 5px; background: var(--surface-2); border-radius: 99px; overflow: hidden; max-width: 160px; }
+.checklist-mini i { display: block; height: 100%; background: var(--ok); border-radius: 99px; transition: width .3s; }
+.stext-in { flex: 1; min-width: 0; border: 1px solid transparent; background: transparent; color: var(--text); font: inherit; font-size: 13px; padding: 4px 6px; border-radius: 6px; }
+.stext-in:hover { border-color: var(--border); }
+.stext-in:focus { outline: none; border-color: var(--accent); background: var(--surface); }
+.sub.done .stext-in { text-decoration: line-through; color: var(--text-faint); }
+.sord { display: flex; gap: 1px; }
+.sarrow { background: none; border: none; color: var(--text-faint); cursor: pointer; padding: 2px; display: grid; place-items: center; border-radius: 4px; }
+.sarrow:hover:not(:disabled) { color: var(--text); background: var(--surface-2); }
+.sarrow:disabled { opacity: .3; cursor: default; }
 .sub .srem { background: none; border: none; color: var(--text-faint); cursor: pointer; opacity: 0; padding: 2px; display: grid; place-items: center; transition: .15s; }
 .sub:hover .srem { opacity: 1; }
 .sub .srem:hover { color: var(--danger); }
@@ -725,6 +737,8 @@ select { cursor: pointer; }
     el.className = "card cat-" + t.cat + (t.done ? " done" : "");
     var over = !t.done && t.due && t.due < todayStr();
     var cur = statusFor(t);
+    var subs = t.subtasks || [];
+    var sdone = subs.filter(function (s) { return s.done; }).length;
 
     el.innerHTML =
       '<button class="check ' + (t.done ? "on" : "") + '" title="Marcar como hecha">' +
@@ -754,13 +768,19 @@ select { cursor: pointer; }
           '<div class="status-cap"><span style="color:' + cur.color + '">' + cur.label + '</span><span>' + cur.pct + '%</span></div>' +
         '</div>' +
         '<div class="checklist">' +
-          (t.subtasks || []).map(function (s, i) {
+          (subs.length ? '<div class="checklist-head">Pasos <span>' + sdone + "/" + subs.length + " hechos</span>" +
+            '<div class="checklist-mini"><i style="width:' + Math.round(sdone / subs.length * 100) + '%"></i></div></div>' : "") +
+          subs.map(function (s, i) {
             return '<div class="sub-item">' +
               '<div class="sub ' + (s.done ? "done" : "") + '">' +
-                '<button class="sbox ' + (s.done ? "on" : "") + '" data-sub="' + i + '">' +
+                '<button class="sbox ' + (s.done ? "on" : "") + '" data-sub="' + i + '" title="Marcar paso">' +
                   (s.done ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>' : '') +
                 '</button>' +
-                '<span class="stext">' + esc(s.text) + '</span>' +
+                '<input class="stext-in" data-stext="' + i + '" value="' + esc(s.text) + '">' +
+                '<span class="sord">' +
+                  '<button class="sarrow" data-sup="' + i + '" title="Subir"' + (i === 0 ? " disabled" : "") + '><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg></button>' +
+                  '<button class="sarrow" data-sdown="' + i + '" title="Bajar"' + (i === subs.length - 1 ? " disabled" : "") + '><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>' +
+                '</span>' +
                 '<button class="srem" data-subrem="' + i + '" title="Quitar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>' +
               '</div>' +
               '<input class="sub-note" data-note="' + i + '" placeholder="Nota: qué se hizo en este paso..." value="' + esc(s.note || "") + '">' +
@@ -793,6 +813,15 @@ select { cursor: pointer; }
     });
     el.querySelectorAll("[data-note]").forEach(function (inp) {
       inp.onchange = function () { setSubNote(t.id, parseInt(inp.dataset.note, 10), inp.value); };
+    });
+    el.querySelectorAll("[data-stext]").forEach(function (inp) {
+      inp.onchange = function () { editSub(t.id, parseInt(inp.dataset.stext, 10), inp.value); };
+    });
+    el.querySelectorAll("[data-sup]").forEach(function (b) {
+      b.onclick = function () { moveSub(t.id, parseInt(b.dataset.sup, 10), -1); };
+    });
+    el.querySelectorAll("[data-sdown]").forEach(function (b) {
+      b.onclick = function () { moveSub(t.id, parseInt(b.dataset.sdown, 10), 1); };
     });
     var tnote = el.querySelector("[data-tasknote]");
     if (tnote) tnote.onchange = function () { setTaskNote(t.id, tnote.value); };
@@ -845,6 +874,18 @@ select { cursor: pointer; }
   function removeSub(id, i) {
     var t = byId(id); if (!t || !t.subtasks) return;
     t.subtasks.splice(i, 1);
+    save(); clearTicks(); render();
+  }
+  function editSub(id, i, text) {
+    var t = byId(id); if (!t || !t.subtasks[i]) return;
+    t.subtasks[i].text = text;
+    save(); // sin re-render, para no interrumpir mientras escribes
+  }
+  function moveSub(id, i, dir) {
+    var t = byId(id); if (!t || !t.subtasks) return;
+    var j = i + dir;
+    if (j < 0 || j >= t.subtasks.length) return;
+    var tmp = t.subtasks[i]; t.subtasks[i] = t.subtasks[j]; t.subtasks[j] = tmp;
     save(); clearTicks(); render();
   }
   function setSubNote(id, i, note) {
