@@ -163,6 +163,7 @@ select { cursor: pointer; }
 .chip.alta { background: var(--danger-soft); color: var(--danger); }
 .chip.media { background: var(--work-soft); color: var(--work); }
 .chip.baja { background: var(--surface-2); color: var(--text-soft); }
+.chip.materia { background: var(--accent-soft); color: var(--accent); }
 .desc { font-size: 13px; color: var(--text-soft); margin-top: 6px; white-space: pre-wrap; word-break: break-word; }
 .meta { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 12px; font-size: 12px; color: var(--text-soft); }
 .meta .m { display: inline-flex; align-items: center; gap: 5px; }
@@ -446,6 +447,11 @@ select { cursor: pointer; }
           <input id="fDue" type="date">
         </div>
         <div class="field">
+          <label for="fMateria">Materia (universidad, opcional)</label>
+          <input id="fMateria" list="materiasList" placeholder="Elige o escribe la materia" autocomplete="off">
+          <datalist id="materiasList"></datalist>
+        </div>
+        <div class="field">
           <label for="fPeople">Personas (sepáralas con comas)</label>
           <input id="fPeople" placeholder="Ej: Yo, Ana, Prof. Ruiz">
         </div>
@@ -469,6 +475,16 @@ select { cursor: pointer; }
   var CONFIG = {
     googleClientId: "379552251382-59je16sqnq5foe4v6ndrcs8jvoom48o3.apps.googleusercontent.com"
   };
+
+  // Tus materias del semestre (edítalas cuando cambien). Sirven para etiquetar
+  // las tareas de universidad y para que el lector de pantallazos las reconozca.
+  var MATERIAS = [
+    "Gerencia de Proyectos de TI",
+    "Cibernética",
+    "Electiva II",
+    "Desempeño Ambiental en Ing. de Sistemas",
+    "Gestión del Talento Humano"
+  ];
 
   var KEY = "organizador_tareas_v1";
   var THEME_KEY = "organizador_tema";
@@ -576,7 +592,7 @@ select { cursor: pointer; }
   function visibleTasks() {
     var arr = tasks.filter(function (t) {
       if (filter !== "todas" && t.cat !== filter) return false;
-      if (query && (t.title + " " + (t.desc || "") + " " + (t.people || []).join(" ")).toLowerCase().indexOf(query) === -1) return false;
+      if (query && (t.title + " " + (t.desc || "") + " " + (t.materia || "") + " " + (t.people || []).join(" ")).toLowerCase().indexOf(query) === -1) return false;
       return true;
     });
     var prioRank = { alta: 0, media: 1, baja: 2 };
@@ -658,6 +674,7 @@ select { cursor: pointer; }
           '<span class="title">' + esc(t.title) + '</span>' +
           '<span class="chip ' + t.cat + '">' + (t.cat === "universidad" ? "Universidad" : "Trabajo") + '</span>' +
           '<span class="chip ' + t.prio + '">' + cap(t.prio) + '</span>' +
+          (t.materia ? '<span class="chip materia">' + esc(t.materia) + '</span>' : '') +
           (t.people && t.people.length ? '<span class="assignees">' +
             t.people.slice(0, 4).map(function (p) { return '<span class="avatar" title="' + esc(p) + '">' + esc(initials(p)) + '</span>'; }).join("") +
             (t.people.length > 4 ? '<span class="avatar">+' + (t.people.length - 4) + '</span>' : '') +
@@ -780,6 +797,12 @@ select { cursor: pointer; }
   // ---- Modal ----
   var overlay = document.getElementById("overlay");
   var form = document.getElementById("form");
+
+  // Llena el desplegable de materias con tu lista.
+  (function () {
+    var dl = document.getElementById("materiasList");
+    if (dl) dl.innerHTML = MATERIAS.map(function (m) { return '<option value="' + esc(m) + '">'; }).join("");
+  })();
   function openModal(id) {
     editingId = id || null;
     document.getElementById("modalTitle").textContent = id ? "Editar tarea" : "Nueva tarea";
@@ -795,6 +818,7 @@ select { cursor: pointer; }
       form.fCat.value = t.cat;
       form.fPrio.value = t.prio;
       form.fDue.value = t.due || "";
+      form.fMateria.value = t.materia || "";
       form.fPeople.value = (t.people || []).join(", ");
     } else {
       form.reset();
@@ -814,16 +838,17 @@ select { cursor: pointer; }
       cat: form.fCat.value,
       prio: form.fPrio.value,
       due: form.fDue.value || "",
+      materia: form.fMateria.value.trim(),
       people: form.fPeople.value.split(",").map(function (p) { return p.trim(); }).filter(Boolean)
     };
     if (!data.title) return;
     if (editingId) {
       var t = byId(editingId);
-      t.title = data.title; t.desc = data.desc; t.cat = data.cat; t.prio = data.prio; t.due = data.due; t.people = data.people;
+      t.title = data.title; t.desc = data.desc; t.cat = data.cat; t.prio = data.prio; t.due = data.due; t.materia = data.materia; t.people = data.people;
     } else {
       tasks.push({
         id: uid(), title: data.title, desc: data.desc, cat: data.cat, prio: data.prio,
-        due: data.due, people: data.people, done: false, status: "sin_revisar", progress: 0,
+        due: data.due, materia: data.materia, people: data.people, done: false, status: "sin_revisar", progress: 0,
         subtasks: pendingSubtasks, created: Date.now()
       });
     }
@@ -1145,10 +1170,10 @@ select { cursor: pointer; }
     if (workKW.length > uniKW.length) form.fCat.value = "trabajo";
     else if (uniKW.length > workKW.length) form.fCat.value = "universidad";
 
-    // Para universidad, agrega la materia al inicio del detalle.
+    // Materia: para universidad, la deduce y la ajusta a tu lista si coincide.
     if (form.fCat.value === "universidad") {
-      var materia = extractMateria(lines);
-      if (materia) form.fDesc.value = ("Materia: " + materia + "\n\n" + form.fDesc.value).slice(0, 1400);
+      var materia = matchMateria(extractMateria(lines));
+      if (materia) form.fMateria.value = materia;
     }
 
     // Prioridad: lee "Prioridad baja/media/alta" o palabras de urgencia.
@@ -1242,6 +1267,25 @@ select { cursor: pointer; }
       }
     }
     return "";
+  }
+
+  // Ajusta la materia leída a tu lista MATERIAS (tolera nombres cortados por el OCR).
+  function matchMateria(raw) {
+    if (!raw) return "";
+    var r = norm(raw);
+    var best = "", score = 0;
+    MATERIAS.forEach(function (m) {
+      var mn = norm(m);
+      if (r.indexOf(mn) > -1 || mn.indexOf(r) > -1) { best = m; score = 999; return; }
+      var rw = r.split(" ").filter(function (w) { return w.length >= 4; });
+      var mw = mn.split(" ").filter(function (w) { return w.length >= 4; });
+      var c = 0;
+      rw.forEach(function (w) {
+        mw.forEach(function (x) { if (x.indexOf(w) === 0 || w.indexOf(x) === 0) c++; });
+      });
+      if (c > score) { score = c; best = m; }
+    });
+    return score >= 1 ? best : raw;
   }
 
   // Materia: el primer nivel de las migas de pan (con >), sin el código del curso.
