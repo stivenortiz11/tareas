@@ -207,6 +207,15 @@ select { cursor: pointer; }
 .sub .srem { background: none; border: none; color: var(--text-faint); cursor: pointer; opacity: 0; padding: 2px; display: grid; place-items: center; transition: .15s; }
 .sub:hover .srem { opacity: 1; }
 .sub .srem:hover { color: var(--danger); }
+.sub-item { display: flex; flex-direction: column; }
+.sub-note {
+  margin-left: 26px; margin-top: 2px; margin-bottom: 2px; width: calc(100% - 26px);
+  padding: 4px 8px; font-size: 12px; color: var(--text-soft);
+  background: transparent; border: 1px solid transparent; border-radius: 6px;
+}
+.sub-note::placeholder { color: var(--text-faint); }
+.sub-note:hover { border-color: var(--border); }
+.sub-note:focus { border-color: var(--accent); background: var(--surface); color: var(--text); }
 .addsub { display: flex; gap: 6px; margin-top: 4px; }
 .addsub input { padding: 6px 10px; font-size: 13px; }
 .addsub button { border: 1px dashed var(--border); background: none; color: var(--text-soft); border-radius: 8px; padding: 6px 12px; cursor: pointer; font: inherit; font-size: 13px; white-space: nowrap; }
@@ -438,7 +447,7 @@ select { cursor: pointer; }
   function seed() {
     var now = Date.now();
     return [
-      { id: uid(), title: "Ejemplo: preparar presentación de clase", desc: "Diapositivas + guion de 10 min", cat: "universidad", prio: "alta", due: dateOffset(3), done: false, progress: 30, seconds: 0, running: null, created: now, people: ["Yo", "Ana"], subtasks: [{ text: "Armar el guion", done: true }, { text: "Diseñar diapositivas", done: false }, { text: "Ensayar", done: false }] },
+      { id: uid(), title: "Ejemplo: preparar presentación de clase", desc: "Diapositivas + guion de 10 min", cat: "universidad", prio: "alta", due: dateOffset(3), done: false, progress: 30, seconds: 0, running: null, created: now, people: ["Yo", "Ana"], subtasks: [{ text: "Armar el guion", done: true, note: "Listo, quedó en el documento compartido" }, { text: "Diseñar diapositivas", done: false, note: "" }, { text: "Ensayar", done: false, note: "" }] },
       { id: uid(), title: "Ejemplo: enviar reporte semanal", desc: "", cat: "trabajo", prio: "media", due: dateOffset(1), done: false, progress: 0, seconds: 0, running: null, created: now - 1000, people: ["Yo"], subtasks: [] }
     ];
   }
@@ -586,12 +595,15 @@ select { cursor: pointer; }
             : '<div class="progress-row"><input type="range" min="0" max="100" step="5" value="' + (t.progress || 0) + '" data-prog><span class="pval">' + (t.progress || 0) + '%</span></div>') +
           '<div class="checklist">' +
             (t.subtasks || []).map(function (s, i) {
-              return '<div class="sub ' + (s.done ? "done" : "") + '">' +
-                '<button class="sbox ' + (s.done ? "on" : "") + '" data-sub="' + i + '">' +
-                  (s.done ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>' : '') +
-                '</button>' +
-                '<span class="stext">' + esc(s.text) + '</span>' +
-                '<button class="srem" data-subrem="' + i + '" title="Quitar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>' +
+              return '<div class="sub-item">' +
+                '<div class="sub ' + (s.done ? "done" : "") + '">' +
+                  '<button class="sbox ' + (s.done ? "on" : "") + '" data-sub="' + i + '">' +
+                    (s.done ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>' : '') +
+                  '</button>' +
+                  '<span class="stext">' + esc(s.text) + '</span>' +
+                  '<button class="srem" data-subrem="' + i + '" title="Quitar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>' +
+                '</div>' +
+                '<input class="sub-note" data-note="' + i + '" placeholder="Nota: qué se hizo en este paso..." value="' + esc(s.note || "") + '">' +
               '</div>';
             }).join("") +
             '<div class="addsub"><input data-subinput placeholder="Agregar paso..."><button data-subadd>Añadir paso</button></div>' +
@@ -635,6 +647,9 @@ select { cursor: pointer; }
     });
     el.querySelectorAll("[data-subrem]").forEach(function (b) {
       b.onclick = function () { removeSub(t.id, parseInt(b.dataset.subrem, 10)); };
+    });
+    el.querySelectorAll("[data-note]").forEach(function (inp) {
+      inp.onchange = function () { setSubNote(t.id, parseInt(inp.dataset.note, 10), inp.value); };
     });
     var subInput = el.querySelector("[data-subinput]");
     var subAdd = el.querySelector("[data-subadd]");
@@ -711,6 +726,11 @@ select { cursor: pointer; }
     var t = byId(id); if (!t || !t.subtasks) return;
     t.subtasks.splice(i, 1);
     save(); clearTicks(); render();
+  }
+  function setSubNote(id, i, note) {
+    var t = byId(id); if (!t || !t.subtasks[i]) return;
+    t.subtasks[i].note = note;
+    save(); // sin re-render, para no interrumpir mientras escribes
   }
 
   function clearTicks() {

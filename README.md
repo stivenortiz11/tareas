@@ -11,6 +11,7 @@ Abre `index.html` con doble clic y listo. También puedes subirla a Netlify (ver
 - Crear tareas con título, detalle, categoría (Universidad o Trabajo), prioridad y fecha límite.
 - Asignar personas a cada tarea, no solo a ti. Se ven como iniciales en la tarjeta y puedes buscarlas por nombre.
 - Dividir cada tarea en pasos (checklist). El avance se calcula solo según los pasos que marcas.
+- Escribir una nota en cada paso para dejar constancia de qué se hizo.
 - Cronometrar el tiempo por tarea con play y pausa. Solo corre un cronómetro a la vez para que el total sea real.
 - Ver un aviso arriba cuando hay tareas atrasadas o para hoy.
 - Crear una tarea desde un pantallazo: subes la captura, se lee el texto y se rellenan los campos. Luego revisas y ajustas.
