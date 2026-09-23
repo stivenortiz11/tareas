@@ -258,6 +258,12 @@ select { cursor: pointer; }
 .modal.wide { max-width: 820px; }
 .horario-img { width: 100%; height: auto; border-radius: 12px; display: block; border: 1px solid var(--border); }
 .horario-empty { color: var(--text-soft); font-size: 13px; text-align: center; margin: 0 0 4px; }
+.link-btn { background: none; border: none; color: var(--accent); cursor: pointer; font: inherit; font-size: 12px; padding: 4px 0 0; text-decoration: underline; }
+.mlist { display: flex; flex-direction: column; gap: 8px; }
+.mrow { display: flex; align-items: center; gap: 10px; padding: 9px 12px; background: var(--surface-2); border-radius: 8px; }
+.mrow span { flex: 1; font-size: 14px; }
+.mrem { background: none; border: none; color: var(--text-faint); cursor: pointer; display: grid; place-items: center; padding: 2px; }
+.mrem:hover { color: var(--danger); }
 @keyframes pop { from { transform: translateY(12px) scale(.98); opacity: 0; } }
 .modal-head { padding: 20px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; }
 .modal-head h2 { font-size: 17px; font-weight: 700; }
@@ -408,6 +414,19 @@ select { cursor: pointer; }
   </div>
 </div>
 
+<!-- Mis materias -->
+<div class="overlay" id="materiasOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Mis materias</h2>
+      <button id="closeMaterias" aria-label="Cerrar">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" id="materiasBody"></div>
+  </div>
+</div>
+
 <!-- Horario -->
 <div class="overlay" id="horarioOverlay">
   <div class="modal wide">
@@ -476,6 +495,7 @@ select { cursor: pointer; }
           <label for="fMateria">Materia (universidad, opcional)</label>
           <input id="fMateria" list="materiasList" placeholder="Elige o escribe la materia" autocomplete="off">
           <datalist id="materiasList"></datalist>
+          <button type="button" id="editMateriasLink" class="link-btn">Editar mis materias</button>
         </div>
         <div class="field">
           <label for="fPeople">Personas (sepáralas con comas)</label>
@@ -515,6 +535,7 @@ select { cursor: pointer; }
   var KEY = "organizador_tareas_v1";
   var THEME_KEY = "organizador_tema";
   var HORARIO_KEY = "organizador_horario";
+  var MATERIAS_KEY = "organizador_materias";
   var DRIVE_FILE_KEY = "organizador_drive_file_id";
   var DRIVE_FILE_NAME = "organizador-tareas.json";
 
@@ -528,6 +549,7 @@ select { cursor: pointer; }
   var pendingSubtasks = []; // pasos sugeridos por la IA al leer un pantallazo
   var horario = null;       // pantallazo del horario (data URL)
   try { horario = localStorage.getItem(HORARIO_KEY) || null; } catch (e) {}
+  try { var mStored = JSON.parse(localStorage.getItem(MATERIAS_KEY) || "null"); if (Array.isArray(mStored) && mStored.length) MATERIAS = mStored; } catch (e) {}
 
   // Drive
   var driveToken = null;
@@ -547,7 +569,7 @@ select { cursor: pointer; }
     try { localStorage.setItem(KEY, JSON.stringify(tasks)); } catch (e) {}
     if (driveToken) scheduleDriveSave();
   }
-  function snapshot() { return { tasks: tasks, horario: horario }; }
+  function snapshot() { return { tasks: tasks, horario: horario, materias: MATERIAS }; }
   function saveHorario() {
     try { if (horario) localStorage.setItem(HORARIO_KEY, horario); else localStorage.removeItem(HORARIO_KEY); } catch (e) {}
     if (driveToken) scheduleDriveSave();
@@ -846,10 +868,15 @@ select { cursor: pointer; }
   var form = document.getElementById("form");
 
   // Llena el desplegable de materias con tu lista.
-  (function () {
+  function fillMateriasDatalist() {
     var dl = document.getElementById("materiasList");
     if (dl) dl.innerHTML = MATERIAS.map(function (m) { return '<option value="' + esc(m) + '">'; }).join("");
-  })();
+  }
+  fillMateriasDatalist();
+  function saveMaterias() {
+    try { localStorage.setItem(MATERIAS_KEY, JSON.stringify(MATERIAS)); } catch (e) {}
+    if (driveToken) scheduleDriveSave();
+  }
   function openModal(id) {
     editingId = id || null;
     document.getElementById("modalTitle").textContent = id ? "Editar tarea" : "Nueva tarea";
@@ -908,7 +935,7 @@ select { cursor: pointer; }
   document.getElementById("cancelBtn").onclick = closeModal;
   overlay.onclick = function (e) { if (e.target === overlay) closeModal(); };
   document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape") { closeModal(); if (horarioOverlay) horarioOverlay.classList.remove("open"); }
+    if (e.key === "Escape") { closeModal(); if (horarioOverlay) horarioOverlay.classList.remove("open"); if (materiasOverlay) materiasOverlay.classList.remove("open"); }
   });
 
   // ---- Toolbar ----
@@ -1107,6 +1134,11 @@ select { cursor: pointer; }
         if (data && typeof data.horario !== "undefined") {
           horario = data.horario || null;
           try { if (horario) localStorage.setItem(HORARIO_KEY, horario); else localStorage.removeItem(HORARIO_KEY); } catch (e) {}
+        }
+        if (data && Array.isArray(data.materias) && data.materias.length) {
+          MATERIAS = data.materias;
+          try { localStorage.setItem(MATERIAS_KEY, JSON.stringify(MATERIAS)); } catch (e) {}
+          fillMateriasDatalist();
         }
         try { localStorage.setItem(KEY, JSON.stringify(tasks)); } catch (e) {}
         clearTicks(); render();
@@ -1395,6 +1427,39 @@ select { cursor: pointer; }
     return "";
   }
   function pad2(n) { n = String(n); return n.length < 2 ? "0" + n : n; }
+
+  // ---- Editor de materias ----
+  var materiasOverlay = document.getElementById("materiasOverlay");
+  var materiasBody = document.getElementById("materiasBody");
+  var editMateriasLink = document.getElementById("editMateriasLink");
+  if (editMateriasLink) editMateriasLink.onclick = openMaterias;
+  document.getElementById("closeMaterias").onclick = function () { materiasOverlay.classList.remove("open"); };
+  materiasOverlay.onclick = function (e) { if (e.target === materiasOverlay) materiasOverlay.classList.remove("open"); };
+
+  function openMaterias() { renderMateriasBody(); materiasOverlay.classList.add("open"); }
+  function renderMateriasBody() {
+    var rows = MATERIAS.map(function (m, i) {
+      return '<div class="mrow"><span>' + esc(m) + '</span><button class="mrem" data-mrem="' + i + '" title="Quitar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>';
+    }).join("");
+    materiasBody.innerHTML =
+      (MATERIAS.length ? '<div class="mlist">' + rows + '</div>' : '<p class="horario-empty">No tienes materias. Agrega la primera.</p>') +
+      '<div class="addsub" style="margin-top:14px"><input id="newMateria" placeholder="Nueva materia..."><button id="addMateriaBtn">Agregar</button></div>';
+    materiasBody.querySelectorAll("[data-mrem]").forEach(function (b) {
+      b.onclick = function () {
+        MATERIAS.splice(parseInt(b.dataset.mrem, 10), 1);
+        saveMaterias(); fillMateriasDatalist(); renderMateriasBody();
+      };
+    });
+    var ni = document.getElementById("newMateria"), ab = document.getElementById("addMateriaBtn");
+    function add() {
+      var v = ni.value.trim();
+      if (v && MATERIAS.indexOf(v) === -1) { MATERIAS.push(v); saveMaterias(); fillMateriasDatalist(); }
+      renderMateriasBody();
+      var nn = document.getElementById("newMateria"); if (nn) nn.focus();
+    }
+    ab.onclick = add;
+    ni.onkeydown = function (e) { if (e.key === "Enter") { e.preventDefault(); add(); } };
+  }
 
   // ---- Horario ----
   var horarioBtn = document.getElementById("horarioBtn");
