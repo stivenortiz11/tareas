@@ -387,6 +387,7 @@ select { cursor: pointer; }
       <button class="tab active" data-cat="todas">Todas</button>
       <button class="tab" data-cat="universidad">Universidad</button>
       <button class="tab" data-cat="trabajo">Trabajo</button>
+      <button class="tab" data-cat="realizadas">Realizadas</button>
     </div>
     <div class="grow search">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
@@ -658,14 +659,19 @@ select { cursor: pointer; }
   var statsEl = document.getElementById("stats");
 
   function visibleTasks() {
+    var showDone = filter === "realizadas";
     var arr = tasks.filter(function (t) {
-      if (filter !== "todas" && t.cat !== filter) return false;
+      if (showDone) { if (!t.done) return false; }
+      else {
+        if (t.done) return false;                                  // las terminadas van a "Realizadas"
+        if (filter !== "todas" && t.cat !== filter) return false;
+      }
       if (query && (t.title + " " + (t.desc || "") + " " + (t.materia || "") + " " + (t.people || []).join(" ")).toLowerCase().indexOf(query) === -1) return false;
       return true;
     });
     var prioRank = { alta: 0, media: 1, baja: 2 };
     arr.sort(function (a, b) {
-      if (a.done !== b.done) return a.done ? 1 : -1;
+      if (showDone) return (b.doneAt || 0) - (a.doneAt || 0);       // finalizadas: las más recientes primero
       if (sortBy === "due") {
         if (!a.due) return 1; if (!b.due) return -1;
         return a.due.localeCompare(b.due);
@@ -706,7 +712,9 @@ select { cursor: pointer; }
     if (!arr.length) {
       listEl.innerHTML = '<div class="empty">' +
         '<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>' +
-        '<h3>Sin tareas aquí</h3><p>Crea una nueva con el botón de arriba.</p></div>';
+        (filter === "realizadas"
+          ? '<h3>Aún no has terminado tareas</h3><p>Cuando marques una como Terminada, aparecerá aquí.</p>'
+          : '<h3>Sin tareas aquí</h3><p>Crea una nueva con el botón de arriba.</p>') + '</div>';
       return;
     }
     arr.forEach(function (t) { listEl.appendChild(cardEl(t)); });
@@ -838,7 +846,7 @@ select { cursor: pointer; }
   function toggleDone(id) {
     var t = byId(id); if (!t) return;
     t.done = !t.done;
-    if (t.done) { t.status = "terminada"; t.progress = 100; }
+    if (t.done) { t.status = "terminada"; t.progress = 100; t.doneAt = Date.now(); }
     else {
       if (!t.status || t.status === "terminada") t.status = "iniciada";
       var st = statusByKey(t.status);
@@ -852,6 +860,7 @@ select { cursor: pointer; }
     t.status = key;
     t.progress = st.pct;
     t.done = (key === "terminada");
+    if (t.done) t.doneAt = Date.now();
     save(); clearTicks(); render();
   }
   function removeTask(id) {
