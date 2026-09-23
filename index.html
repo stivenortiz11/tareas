@@ -171,6 +171,19 @@ select { cursor: pointer; }
 .progress-row { display: flex; align-items: center; gap: 10px; }
 .progress-row input[type=range] { flex: 1; accent-color: var(--accent); cursor: pointer; padding: 0; }
 .progress-row .pval { font-size: 12px; font-weight: 600; color: var(--text-soft); width: 38px; text-align: right; }
+
+/* Estado por etapas */
+.status-wrap { margin-top: 12px; }
+.status-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.spill {
+  border: 1px solid var(--border); background: var(--surface); color: var(--text-soft);
+  font: inherit; font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 99px; cursor: pointer; transition: .15s;
+}
+.spill:hover { border-color: var(--accent); color: var(--accent); }
+.spill.on { background: var(--surface-2); }
+.status-bar { height: 8px; background: var(--surface-2); border-radius: 99px; overflow: hidden; margin-top: 10px; }
+.status-bar i { display: block; height: 100%; border-radius: 99px; transition: width .3s; }
+.status-cap { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: var(--text-soft); margin-top: 5px; }
 .timer {
   display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 8px 10px;
   background: var(--surface-2); border-radius: 10px; font-variant-numeric: tabular-nums;
@@ -524,14 +537,32 @@ select { cursor: pointer; }
     return m + "m";
   }
 
-  // Progress comes from the checklist when it has items; otherwise from the slider.
-  function taskProgress(t) {
-    if (t.subtasks && t.subtasks.length) {
-      var d = t.subtasks.filter(function (s) { return s.done; }).length;
-      return Math.round((d / t.subtasks.length) * 100);
-    }
-    return t.progress || 0;
+  // Estados de una tarea (etapas), cada uno con su avance y color.
+  var STATUSES = [
+    { key: "sin_revisar", label: "Sin revisar", pct: 0, color: "var(--text-faint)" },
+    { key: "revisado", label: "Revisado", pct: 15, color: "var(--uni)" },
+    { key: "iniciada", label: "Iniciada", pct: 35, color: "var(--uni)" },
+    { key: "media", label: "A la mitad", pct: 55, color: "var(--work)" },
+    { key: "casi", label: "Casi lista", pct: 80, color: "var(--work)" },
+    { key: "terminada", label: "Terminada", pct: 100, color: "var(--ok)" }
+  ];
+  function statusByKey(key) {
+    for (var i = 0; i < STATUSES.length; i++) if (STATUSES[i].key === key) return STATUSES[i];
+    return null;
   }
+  function statusFor(t) {
+    var key = t.status;
+    if (!key) {
+      // Deriva un estado a partir de datos viejos (progress/done).
+      if (t.done) key = "terminada";
+      else if ((t.progress || 0) >= 80) key = "casi";
+      else if ((t.progress || 0) >= 50) key = "media";
+      else if ((t.progress || 0) > 0) key = "iniciada";
+      else key = "sin_revisar";
+    }
+    return statusByKey(key) || STATUSES[0];
+  }
+  function taskProgress(t) { return statusFor(t).pct; }
   function initials(name) {
     var parts = name.trim().split(/\s+/);
     if (parts.length === 1) return parts[0].slice(0, 2);
@@ -598,11 +629,12 @@ select { cursor: pointer; }
     var pending = total - done;
     var pct = total ? Math.round((done / total) * 100) : 0;
     var overdue = tasks.filter(function (t) { return !t.done && t.due && t.due < todayStr(); }).length;
+    var enProg = tasks.filter(function (t) { return !t.done && statusFor(t).key !== "sin_revisar"; }).length;
     statsEl.innerHTML =
       stat(total, "Tareas en total") +
       stat(pending, overdue ? overdue + " atrasada" + (overdue > 1 ? "s" : "") : "Pendientes", overdue ? "danger" : "") +
       statBar(pct, done + " de " + total + " completadas") +
-      stat(fmtHM(totalTime()), "Tiempo registrado");
+      stat(enProg, "En progreso");
   }
   function stat(num, lbl, cls) {
     return '<div class="stat"><div class="num"' + (cls === "danger" ? ' style="color:var(--danger)"' : "") + '>' + num + '</div><div class="lbl">' + esc(lbl) + '</div></div>';
@@ -615,9 +647,7 @@ select { cursor: pointer; }
     var el = document.createElement("div");
     el.className = "card cat-" + t.cat + (t.done ? " done" : "");
     var over = !t.done && t.due && t.due < todayStr();
-    var sec = elapsed(t);
-    var pct = taskProgress(t);
-    var hasSubs = t.subtasks && t.subtasks.length;
+    var cur = statusFor(t);
 
     el.innerHTML =
       '<button class="check ' + (t.done ? "on" : "") + '" title="Marcar como hecha">' +
@@ -634,37 +664,31 @@ select { cursor: pointer; }
           '</span>' : '') +
         '</div>' +
         (t.desc ? '<div class="desc">' + esc(t.desc) + '</div>' : '') +
-        '<div class="progress-wrap">' +
-          (hasSubs
-            ? '<div class="progress-row"><div style="flex:1;height:8px;background:var(--surface-2);border-radius:99px;overflow:hidden"><i style="display:block;height:100%;border-radius:99px;background:var(--ok);width:' + pct + '%;transition:width .3s"></i></div><span class="pval">' + pct + '%</span></div>'
-            : '<div class="progress-row"><input type="range" min="0" max="100" step="5" value="' + (t.progress || 0) + '" data-prog><span class="pval">' + (t.progress || 0) + '%</span></div>') +
-          '<div class="checklist">' +
-            (t.subtasks || []).map(function (s, i) {
-              return '<div class="sub-item">' +
-                '<div class="sub ' + (s.done ? "done" : "") + '">' +
-                  '<button class="sbox ' + (s.done ? "on" : "") + '" data-sub="' + i + '">' +
-                    (s.done ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>' : '') +
-                  '</button>' +
-                  '<span class="stext">' + esc(s.text) + '</span>' +
-                  '<button class="srem" data-subrem="' + i + '" title="Quitar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>' +
-                '</div>' +
-                '<input class="sub-note" data-note="' + i + '" placeholder="Nota: qué se hizo en este paso..." value="' + esc(s.note || "") + '">' +
-              '</div>';
+        '<div class="status-wrap">' +
+          '<div class="status-pills">' +
+            STATUSES.map(function (s) {
+              return '<button class="spill' + (s.key === cur.key ? " on" : "") + '" data-status="' + s.key + '"' +
+                (s.key === cur.key ? ' style="border-color:' + s.color + ';color:' + s.color + '"' : '') +
+                '>' + s.label + '</button>';
             }).join("") +
-            '<div class="addsub"><input data-subinput placeholder="Agregar paso..."><button data-subadd>Añadir paso</button></div>' +
           '</div>' +
+          '<div class="status-bar"><i style="width:' + cur.pct + '%;background:' + cur.color + '"></i></div>' +
+          '<div class="status-cap"><span style="color:' + cur.color + '">' + cur.label + '</span><span>' + cur.pct + '%</span></div>' +
         '</div>' +
-        '<div class="timer ' + (t.running ? "running" : "") + '">' +
-          '<button class="tbtn ' + (t.running ? "" : "play") + '" data-toggle title="' + (t.running ? "Pausar" : "Iniciar") + '">' +
-            (t.running
-              ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>'
-              : '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>') +
-          '</button>' +
-          '<span class="time" data-time>' + fmt(sec) + '</span>' +
-          '<button class="tbtn" data-reset title="Reiniciar cronómetro">' +
-            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>' +
-          '</button>' +
-          '<span class="tlabel">tiempo dedicado</span>' +
+        '<div class="checklist">' +
+          (t.subtasks || []).map(function (s, i) {
+            return '<div class="sub-item">' +
+              '<div class="sub ' + (s.done ? "done" : "") + '">' +
+                '<button class="sbox ' + (s.done ? "on" : "") + '" data-sub="' + i + '">' +
+                  (s.done ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>' : '') +
+                '</button>' +
+                '<span class="stext">' + esc(s.text) + '</span>' +
+                '<button class="srem" data-subrem="' + i + '" title="Quitar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>' +
+              '</div>' +
+              '<input class="sub-note" data-note="' + i + '" placeholder="Nota: qué se hizo en este paso..." value="' + esc(s.note || "") + '">' +
+            '</div>';
+          }).join("") +
+          '<div class="addsub"><input data-subinput placeholder="Agregar paso..."><button data-subadd>Añadir paso</button></div>' +
         '</div>' +
         '<div class="meta">' +
           (t.due ? '<span class="m ' + (over ? "overdue" : "") + '"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>' + fmtDate(t.due) + (over ? " (atrasada)" : "") + '</span>' : '') +
@@ -679,14 +703,9 @@ select { cursor: pointer; }
     el.querySelector(".check").onclick = function () { toggleDone(t.id); };
     el.querySelector("[data-edit]").onclick = function () { openModal(t.id); };
     el.querySelector("[data-del]").onclick = function () { removeTask(t.id); };
-    el.querySelector("[data-toggle]").onclick = function () { toggleTimer(t.id); };
-    el.querySelector("[data-reset]").onclick = function () { resetTimer(t.id); };
-    var range = el.querySelector("[data-prog]");
-    if (range) {
-      var pval = el.querySelector(".pval");
-      range.oninput = function () { pval.textContent = range.value + "%"; };
-      range.onchange = function () { setProgress(t.id, parseInt(range.value, 10)); };
-    }
+    el.querySelectorAll("[data-status]").forEach(function (b) {
+      b.onclick = function () { setStatus(t.id, b.dataset.status); };
+    });
     el.querySelectorAll("[data-sub]").forEach(function (b) {
       b.onclick = function () { toggleSub(t.id, parseInt(b.dataset.sub, 10)); };
     });
@@ -702,13 +721,6 @@ select { cursor: pointer; }
     subAdd.onclick = doAdd;
     subInput.onkeydown = function (e) { if (e.key === "Enter") { e.preventDefault(); doAdd(); } };
 
-    // Live timer
-    if (t.running) {
-      var timeEl = el.querySelector("[data-time]");
-      ticking[t.id] = setInterval(function () {
-        timeEl.textContent = fmt(elapsed(t));
-      }, 1000);
-    }
     return el;
   }
 
@@ -716,44 +728,26 @@ select { cursor: pointer; }
   function toggleDone(id) {
     var t = byId(id); if (!t) return;
     t.done = !t.done;
-    if (t.done) {
-      if (t.running) { t.seconds = elapsed(t); t.running = null; }
-      t.progress = 100;
+    if (t.done) { t.status = "terminada"; t.progress = 100; }
+    else {
+      if (!t.status || t.status === "terminada") t.status = "iniciada";
+      var st = statusByKey(t.status);
+      t.progress = st ? st.pct : 0;
     }
+    save(); clearTicks(); render();
+  }
+  function setStatus(id, key) {
+    var t = byId(id); if (!t) return;
+    var st = statusByKey(key); if (!st) return;
+    t.status = key;
+    t.progress = st.pct;
+    t.done = (key === "terminada");
     save(); clearTicks(); render();
   }
   function removeTask(id) {
     var t = byId(id); if (!t) return;
     if (!confirm('¿Eliminar "' + t.title + '"?')) return;
     tasks = tasks.filter(function (x) { return x.id !== id; });
-    save(); clearTicks(); render();
-  }
-  function setProgress(id, val) {
-    var t = byId(id); if (!t) return;
-    t.progress = val;
-    t.done = val >= 100;
-    if (t.done && t.running) { t.seconds = elapsed(t); t.running = null; }
-    save(); clearTicks(); render();
-  }
-  function toggleTimer(id) {
-    var t = byId(id); if (!t) return;
-    if (t.running) {
-      t.seconds = elapsed(t);
-      t.running = null;
-    } else {
-      // Pause any other running timer (one at a time keeps totals honest)
-      tasks.forEach(function (x) {
-        if (x.running) { x.seconds = elapsed(x); x.running = null; }
-      });
-      t.running = Date.now();
-      if (t.done) { t.done = false; }
-    }
-    save(); clearTicks(); render();
-  }
-  function resetTimer(id) {
-    var t = byId(id); if (!t) return;
-    if (!confirm("¿Reiniciar el cronómetro de esta tarea a cero?")) return;
-    t.seconds = 0; t.running = null;
     save(); clearTicks(); render();
   }
   function addSub(id, text) {
@@ -829,7 +823,7 @@ select { cursor: pointer; }
     } else {
       tasks.push({
         id: uid(), title: data.title, desc: data.desc, cat: data.cat, prio: data.prio,
-        due: data.due, people: data.people, done: false, progress: 0, seconds: 0, running: null,
+        due: data.due, people: data.people, done: false, status: "sin_revisar", progress: 0,
         subtasks: pendingSubtasks, created: Date.now()
       });
     }
