@@ -16,7 +16,7 @@ Abre `index.html` con doble clic y listo. También puedes subirla a Netlify (ver
 - Ver un aviso arriba cuando hay tareas atrasadas o para hoy.
 - Crear una tarea desde un pantallazo: subes la captura, se lee el texto y se rellenan los campos. Luego revisas y ajustas.
 - Buscar, ordenar por fecha, prioridad o progreso, y cambiar entre tema claro y oscuro.
-- Guardar el pantallazo de tu horario y verlo cuando quieras (botón "Horario"), con opción de quitarlo.
+- Ver tu horario recreado como tabla semanal editable (botón "Horario"): agregar, editar y quitar clases con día, hora y salón. También puedes subir el pantallazo original.
 - Saltar a tu app de gastos con el botón de la cabecera.
 
 ## Lectura de pantallazos (OCR)
