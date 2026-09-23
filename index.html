@@ -905,7 +905,7 @@ select { cursor: pointer; }
     if (!(window.google && google.accounts && google.accounts.oauth2)) return false;
     driveTokenClient = google.accounts.oauth2.initTokenClient({
       client_id: CONFIG.googleClientId,
-      scope: "https://www.googleapis.com/auth/drive.file",
+      scope: "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.appdata",
       callback: function (resp) {
         if (resp && resp.access_token) {
           driveToken = resp.access_token;
@@ -918,6 +918,12 @@ select { cursor: pointer; }
           if (gated) showGate("No se pudo entrar." + e);
           setDriveLabel("Conectar Drive");
         }
+      },
+      error_callback: function (err) {
+        console.error(err);
+        var t = (err && err.type) ? err.type : "error";
+        if (gated) showGate("No se pudo abrir la ventana de Google (" + t + "). Revisa el bloqueo de ventanas emergentes y reintenta.");
+        setDriveLabel("Conectar Drive");
       }
     });
     return true;
@@ -1158,8 +1164,14 @@ select { cursor: pointer; }
   });
 
   // Arranque: con Client ID exigimos login (puerta); sin él, modo local.
-  if (gated) { showGate(); autoConnectDrive(); }
-  else { render(); }
+  if (gated) {
+    showGate();
+    var gisTries = 0;
+    var gisIv = setInterval(function () {
+      if (ensureTokenClient()) { clearInterval(gisIv); autoConnectDrive(); }
+      else if (++gisTries > 60) { clearInterval(gisIv); showGate("No cargó Google. Revisa tu conexión y refresca la página."); }
+    }, 150);
+  } else { render(); }
 })();
 </script>
 </body>
