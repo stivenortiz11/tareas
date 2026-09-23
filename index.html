@@ -1126,8 +1126,8 @@ select { cursor: pointer; }
     var due = findDueDate(text);
     if (due) form.fDue.value = due;
 
-    // Título: 1) el "Asunto"/"Re:" de un correo; 2) la primera línea de verdad.
-    var title = subjectTitle(lines) || firstRealLine(lines) || (lines[0] || "");
+    // Título: 1) "Asunto"/"Re:" de un correo; 2) el nombre en las migas de pan; 3) primera línea real.
+    var title = subjectTitle(lines) || headingFromCrumbs(lines) || firstRealLine(lines) || (lines[0] || "");
     title = cleanTitle(dedupe(title)).slice(0, 100);
     form.fTitle.value = title;
 
@@ -1136,7 +1136,7 @@ select { cursor: pointer; }
     form.fDesc.value = desc.slice(0, 1400);
 
     // Categoría por puntaje: cuenta señales de universidad vs. trabajo y gana la mayor.
-    var uniKW = low.match(/\b(clase|profesor|profesora|universidad|examen|parcial|semestre|c[aá]tedra|materia|laboratorio|ensayo|tesis|taller|aula|corte|docente|sustentaci[oó]n)\b/g) || [];
+    var uniKW = low.match(/\b(clase|profesor|profesora|universidad|examen|parcial|semestre|c[aá]tedra|materia|laboratorio|ensayo|tesis|taller|aula|corte|docente|sustentaci[oó]n|m[oó]dulo|objetivo de aprendizaje|entregable|r[uú]brica)\b/g) || [];
     var workKW = low.match(/\b(pqr|ticket|requerimiento|soporte|cliente|factura|cuenta contable|contable|odoo|egresos|recibos|asunto|remitente|coordinador|auxiliar|woden|colaborador|etapa|solicito|cordialmente|saludos cordiales|reporte|informe|oficina|jefe|reuni[oó]n)\b/g) || [];
     if (/\[ext\]/.test(low)) workKW.push("ext");
     if (workKW.length > uniKW.length) form.fCat.value = "trabajo";
@@ -1158,12 +1158,37 @@ select { cursor: pointer; }
     return "";
   }
 
+  // En sistemas web el nombre de la tarea suele estar en las migas de pan
+  // (con > o /). Si ese mismo texto aparece además como encabezado, es el título.
+  function headingFromCrumbs(lines) {
+    var crumbs = [];
+    lines.forEach(function (ln, idx) {
+      var parts = null;
+      if (/\s[>›»]\s/.test(ln)) parts = ln.split(/\s[>›»]\s/);
+      else if ((ln.match(/\s\/\s/g) || []).length >= 2) parts = ln.split(/\s\/\s/);
+      if (parts && parts.length >= 2) parts.forEach(function (p) { crumbs.push({ t: cleanCrumb(p), i: idx }); });
+    });
+    for (var c = 0; c < crumbs.length; c++) {
+      var cc = crumbs[c];
+      if (cc.t.length < 8) continue;
+      if (/^[\w.\- ]*\d{3,}[\w.\- ]*$/.test(cc.t) && cc.t.split(" ").length <= 3) continue; // código de curso/ticket
+      for (var i = 0; i < lines.length; i++) {
+        if (i === cc.i || /\s[>›»]\s/.test(lines[i])) continue;
+        if (norm(cleanCrumb(lines[i])) === norm(cc.t)) return cc.t;
+      }
+    }
+    return "";
+  }
+  function cleanCrumb(s) { return String(s || "").replace(/\s*\(#?\d+\)\s*$/, "").trim(); }
+  function norm(s) { return String(s || "").toLowerCase().replace(/\s+/g, " ").trim(); }
+
   // Primera línea "de verdad": ni basura, ni migas de pan, ni etiqueta de formulario, ni saludo.
   function firstRealLine(lines) {
     for (var i = 0; i < lines.length; i++) {
       var ln = lines[i];
       if (ln.length < 8) continue;
-      if (/[>›»]/.test(ln)) continue;                                   // migas de pan
+      if (/[>›»]/.test(ln)) continue;                                   // migas de pan (>)
+      if ((ln.match(/\s\/\s/g) || []).length >= 2) continue;            // migas de pan (/)
       if (/^[\W_]+$/.test(ln)) continue;                                // solo símbolos
       if (/@/.test(ln) && ln.split(" ").length <= 3) continue;          // correo suelto
       if (/^(apertura|cierre|entrega|fecha|vence|hasta)\b/i.test(ln)) continue;
