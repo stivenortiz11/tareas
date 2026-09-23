@@ -22,11 +22,13 @@ Abre `index.html` con doble clic y listo. También puedes subirla a Netlify (ver
 
 Al subir una captura, el texto se lee dentro del navegador con OCR (Tesseract.js). No se envía a ningún servidor ni necesita cuenta ni clave. La primera vez descarga los datos de idioma desde internet, así que conviene tener conexión. Rellena el título, el detalle y, si los detecta, la categoría, la prioridad y la fecha. Es una ayuda, no magia: revisa siempre lo que quedó.
 
-## Guardar en Google Drive (opcional)
+## Acceso privado con Google
 
-Por defecto las tareas se guardan en el navegador donde abres la app. Si quieres que se sincronicen entre tus dispositivos, puedes conectar tu Google Drive. Es opcional y la app funciona igual sin ello. Los pasos para activarlo están en `SETUP.md`.
+La app trae configurado un Client ID de Google (el mismo de la app de gastos). Con eso, al abrirla pide iniciar sesión con Google y no muestra nada hasta que entras. Tus tareas viven en tu Google Drive, así que solo tú, con tu cuenta, las ves, igual que en la app de gastos.
 
-Cuando conectas Drive, la app guarda un archivo `organizador-tareas.json` en tu Drive y lo usa para cargar y guardar tus tareas. Solo ve ese archivo suyo, no el resto de tu Drive.
+Guarda un archivo `organizador-tareas.json` en tu Drive y lo usa para cargar y guardar. Solo ve ese archivo suyo, no el resto de tu Drive. Como los datos están en Drive, entras desde el móvil y el portátil y ves las mismas tareas.
+
+Para que el login funcione, la URL desde donde abres la app tiene que estar en los "orígenes autorizados" del Client ID en Google Cloud (por ejemplo tu sitio de Netlify). Si algún día quieres quitar el login y volver al modo local, deja `googleClientId` vacío en el código. Los pasos completos están en `SETUP.md`.
 
 ## Usarla desde cualquier lugar
 
