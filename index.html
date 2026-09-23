@@ -1131,17 +1131,12 @@ select { cursor: pointer; }
     title = cleanTitle(dedupe(title)).slice(0, 100);
     form.fTitle.value = title;
 
-    // Detalle: el resto, quitando el título y las líneas que son puro garabato del OCR.
-    var desc = lines.filter(function (l) {
-      if (cleanTitle(dedupe(l)).slice(0, 100) === title) return false;
-      var nonspace = l.replace(/\s/g, "").length;
-      if (nonspace <= 3) return false;                                  // fragmentos sueltos
-      var letters = (l.match(/[a-záéíóúñ]/gi) || []).length;
-      if (letters / nonspace < 0.55) return false;                     // demasiados símbolos o números
-      if (isCrumbLine(l) || (l.match(/[—–|·•]/g) || []).length >= 2) return false;
-      return true;
-    }).join("\n");
-    form.fDesc.value = desc.slice(0, 1400);
+    // Detalle: solo el cuerpo (mensaje del ticket o enunciado), sin campos ni firma.
+    form.fDesc.value = extractBody(lines, title).slice(0, 1400);
+
+    // Persona: el cliente o solicitante, si el pantallazo lo trae.
+    var person = extractPerson(lines);
+    if (person && !form.fPeople.value.trim()) form.fPeople.value = person;
 
     // Categoría por puntaje: cuenta señales de universidad vs. trabajo y gana la mayor.
     var uniKW = low.match(/\b(clase|profesor|profesora|universidad|examen|parcial|semestre|c[aá]tedra|materia|laboratorio|ensayo|tesis|taller|aula|corte|docente|sustentaci[oó]n|m[oó]dulo|objetivo de aprendizaje|entregable|r[uú]brica)\b/g) || [];
@@ -1149,6 +1144,12 @@ select { cursor: pointer; }
     if (/\[ext\]/.test(low)) workKW.push("ext");
     if (workKW.length > uniKW.length) form.fCat.value = "trabajo";
     else if (uniKW.length > workKW.length) form.fCat.value = "universidad";
+
+    // Para universidad, agrega la materia al inicio del detalle.
+    if (form.fCat.value === "universidad") {
+      var materia = extractMateria(lines);
+      if (materia) form.fDesc.value = ("Materia: " + materia + "\n\n" + form.fDesc.value).slice(0, 1400);
+    }
 
     // Prioridad: lee "Prioridad baja/media/alta" o palabras de urgencia.
     var pm = low.match(/prioridad\s+(alta|media|baja)/);
@@ -1203,6 +1204,54 @@ select { cursor: pointer; }
       if (/^(buenos d[ií]as|buenas|estimad|hola|cordial|saludos|atentamente|gracias|quedo|quedamos)\b/i.test(ln)) continue;
       if (/\b\d{1,2}\s+de\s+[a-záéíóú]+\s+de\s+\d{4}\b/i.test(ln)) continue; // línea de fecha
       return ln;
+    }
+    return "";
+  }
+
+  // Extrae solo el cuerpo: el mensaje del ticket o el enunciado, sin campos ni firma.
+  function extractBody(lines, title) {
+    var label = /^(tk|nivel|pa[ií]s|prioridad|tipo\b|tipo de cliente|tipo pqr|categor[ií]a|clasificaci[oó]n|m[eé]todo|tat|equipo|cliente|correo|tel[eé]fono|asignado|nombre del cliente|fecha report|cc|apertura|cierre|vence|entrega|hasta)\b/i;
+    var greet = /^(buen[oa]s?\b|buen d[ií]a|hola\b|estimad|cordial saludo)/i;
+    var closing = /^(atentamente|cordialmente|saludos|gracias\b|un cordial)/i;
+    var footer = /(woden|www\.|https?:|tel[:.]|cel[:.]|\bdir[:.]|calle\s*\d|carrera\s*\d|\bav\.|jefe de|coordinador de|auxiliar de|gerente\b|analista\b|consultor|innovaci[oó]n de productos|\+?\d[\d ]{7,})/i;
+    var attach = /\.(pdf|xlsx?|docx?|pptx?|zip)\b.*\d{1,2}\s+de\s+[a-záéíóú]+\s+de\s+\d{4}/i;
+    var out = [];
+    for (var i = 0; i < lines.length; i++) {
+      var l = lines[i];
+      if (norm(cleanTitle(l)) === norm(title)) continue;
+      if (isCrumbLine(l) || (l.match(/[—–|·•]/g) || []).length >= 2) continue;
+      if (closing.test(l)) break;                    // a partir de la despedida, es firma
+      if (label.test(l) || greet.test(l) || footer.test(l) || attach.test(l)) continue;
+      var nonspace = l.replace(/\s/g, "").length;
+      if (nonspace <= 3) continue;
+      var letters = (l.match(/[a-záéíóúñ]/gi) || []).length;
+      if (letters / nonspace < 0.55) continue;
+      out.push(l);
+    }
+    return out.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+  }
+
+  // Extrae el nombre del cliente/solicitante (quitando correo y comillas).
+  function extractPerson(lines) {
+    for (var i = 0; i < lines.length; i++) {
+      var m = lines[i].match(/nombre del cliente\s*\??\s*(.+)/i) || lines[i].match(/^\s*cliente\s*\??\s*(.+)/i);
+      if (m) {
+        var v = m[1].replace(/<[^>]*>/g, "").replace(/["“”]/g, "").replace(/\s+/g, " ").trim();
+        v = v.replace(/[<(@].*$/, "").trim();
+        if (v.length >= 3 && /[a-záéíóú]/i.test(v)) return v.slice(0, 40);
+      }
+    }
+    return "";
+  }
+
+  // Materia: el primer nivel de las migas de pan (con >), sin el código del curso.
+  function extractMateria(lines) {
+    for (var i = 0; i < lines.length; i++) {
+      if (/\s[>›»]\s/.test(lines[i])) {
+        var first = lines[i].split(/\s[>›»]\s/)[0].trim();
+        first = first.replace(/^[.\s]+/, "").replace(/[-–]\s*\d[\d\-]*\s*$/, "").trim();
+        if (first.length >= 4) return first.slice(0, 60);
+      }
     }
     return "";
   }
