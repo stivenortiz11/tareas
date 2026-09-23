@@ -880,6 +880,7 @@ select { cursor: pointer; }
   var gateLocal = document.getElementById("gateLocal");
   var CONN_KEY = "organizador_gconn";
   var gated = !!CONFIG.googleClientId; // con Client ID, se exige iniciar sesión
+  var silentMode = false; // true durante la reconexión automática (sin clic del usuario)
 
   driveBtn.onclick = connectDrive;
   if (gateBtn) gateBtn.onclick = connectDrive;
@@ -911,18 +912,24 @@ select { cursor: pointer; }
           driveToken = resp.access_token;
           driveTokenExp = Date.now() + (resp.expires_in ? resp.expires_in * 1000 : 3300000) - 60000;
           try { localStorage.setItem(CONN_KEY, "1"); } catch (e) {}
+          silentMode = false;
           setDriveLabel("Sincronizando...");
           syncWithDrive();
         } else {
-          var e = (resp && resp.error) ? (" (" + resp.error + ")") : "";
-          if (gated) showGate("No se pudo entrar." + e);
+          if (silentMode) { silentMode = false; if (gated) showGate(); }
+          else {
+            var e = (resp && resp.error) ? (" (" + resp.error + ")") : "";
+            if (gated) showGate("No se pudo entrar." + e);
+          }
           setDriveLabel("Conectar Drive");
         }
       },
       error_callback: function (err) {
         console.error(err);
+        // Si fue el intento automático (sin clic), no molestamos: dejamos la puerta lista.
+        if (silentMode) { silentMode = false; if (gated) showGate(); setDriveLabel("Conectar Drive"); return; }
         var t = (err && err.type) ? err.type : "error";
-        if (gated) showGate("No se pudo abrir la ventana de Google (" + t + "). Revisa el bloqueo de ventanas emergentes y reintenta.");
+        if (gated) showGate("No se pudo abrir la ventana de Google (" + t + "). Permite las ventanas emergentes del sitio y reintenta.");
         setDriveLabel("Conectar Drive");
       }
     });
@@ -939,6 +946,7 @@ select { cursor: pointer; }
       if (gated) showGate(msg); else alert(msg);
       return;
     }
+    silentMode = false; // es un clic del usuario: aquí sí abrimos ventana y mostramos errores reales
     driveTokenClient.requestAccessToken({ prompt: driveToken ? "" : "consent" });
   }
 
@@ -952,7 +960,8 @@ select { cursor: pointer; }
     var iv = setInterval(function () {
       if (ensureTokenClient()) {
         clearInterval(iv);
-        try { driveTokenClient.requestAccessToken({ prompt: "" }); } catch (e) {}
+        silentMode = true; // intento automático: si falla, no mostramos error
+        try { driveTokenClient.requestAccessToken({ prompt: "" }); } catch (e) { silentMode = false; }
       } else if (++tries > 40) { clearInterval(iv); }
     }, 150);
   }
