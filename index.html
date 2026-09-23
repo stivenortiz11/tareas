@@ -192,6 +192,26 @@ select { cursor: pointer; }
 .card-actions button:hover { background: var(--surface-2); color: var(--text); }
 .card-actions button.del:hover { background: var(--danger-soft); color: var(--danger); }
 
+/* Assignees */
+.assignees { display: inline-flex; gap: 4px; align-items: center; }
+.avatar { width: 22px; height: 22px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-size: 10px; font-weight: 700; display: grid; place-items: center; border: 1px solid var(--surface); text-transform: uppercase; }
+.assignees .names { font-size: 12px; color: var(--text-soft); }
+
+/* Checklist */
+.checklist { margin-top: 12px; display: flex; flex-direction: column; gap: 4px; }
+.sub { display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 2px 0; }
+.sub .sbox { width: 18px; height: 18px; border-radius: 5px; border: 2px solid var(--border); cursor: pointer; display: grid; place-items: center; color: #fff; flex-shrink: 0; background: transparent; }
+.sub .sbox.on { background: var(--ok); border-color: var(--ok); }
+.sub .stext { flex: 1; word-break: break-word; }
+.sub.done .stext { text-decoration: line-through; color: var(--text-faint); }
+.sub .srem { background: none; border: none; color: var(--text-faint); cursor: pointer; opacity: 0; padding: 2px; display: grid; place-items: center; transition: .15s; }
+.sub:hover .srem { opacity: 1; }
+.sub .srem:hover { color: var(--danger); }
+.addsub { display: flex; gap: 6px; margin-top: 4px; }
+.addsub input { padding: 6px 10px; font-size: 13px; }
+.addsub button { border: 1px dashed var(--border); background: none; color: var(--text-soft); border-radius: 8px; padding: 6px 12px; cursor: pointer; font: inherit; font-size: 13px; white-space: nowrap; }
+.addsub button:hover { color: var(--accent); border-color: var(--accent); }
+
 /* Empty */
 .empty { text-align: center; padding: 60px 20px; color: var(--text-soft); }
 .empty svg { color: var(--text-faint); margin-bottom: 12px; }
@@ -217,12 +237,22 @@ select { cursor: pointer; }
 .field .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .modal-foot { padding: 16px 22px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; }
 
+.alert-bar {
+  background: var(--work-soft); color: var(--work); border: 1px solid transparent;
+  border-radius: var(--radius); padding: 12px 16px; margin-bottom: 20px; font-size: 14px;
+  font-weight: 500; display: flex; gap: 10px; align-items: center;
+}
+.alert-bar.danger { background: var(--danger-soft); color: var(--danger); }
+.alert-bar svg { flex-shrink: 0; }
+
 .foot-note { text-align: center; margin-top: 40px; font-size: 12px; color: var(--text-faint); }
 
 @media (max-width: 640px) {
   .stats { grid-template-columns: repeat(2, 1fr); }
   .field .row2 { grid-template-columns: 1fr; }
   .toolbar .grow { order: 3; width: 100%; flex: 1 0 100%; }
+  .hide-sm { display: none; }
+  .header-actions .btn.ghost { padding: 10px; }
 }
 </style>
 </head>
@@ -239,11 +269,17 @@ select { cursor: pointer; }
       </div>
     </div>
     <div class="header-actions">
+      <a class="btn ghost" href="https://magenta-wisp-9fe4da.netlify.app" target="_blank" rel="noopener" title="Ir a mis gastos">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        <span class="hide-sm">Mis gastos</span>
+      </a>
       <button class="icon-btn" id="themeBtn" title="Cambiar tema" aria-label="Cambiar tema">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
       </button>
     </div>
   </header>
+
+  <div id="alertBar"></div>
 
   <section class="stats" id="stats"></section>
 
@@ -316,6 +352,10 @@ select { cursor: pointer; }
           <label for="fDue">Fecha límite (opcional)</label>
           <input id="fDue" type="date">
         </div>
+        <div class="field">
+          <label for="fPeople">Personas (sepáralas con comas)</label>
+          <input id="fPeople" placeholder="Ej: Yo, Ana, Prof. Ruiz">
+        </div>
       </div>
       <div class="modal-foot">
         <button type="button" class="btn ghost" id="cancelBtn">Cancelar</button>
@@ -351,8 +391,8 @@ select { cursor: pointer; }
   function seed() {
     var now = Date.now();
     return [
-      { id: uid(), title: "Ejemplo: preparar presentación de clase", desc: "Diapositivas + guion de 10 min", cat: "universidad", prio: "alta", due: dateOffset(3), done: false, progress: 30, seconds: 0, running: null, created: now },
-      { id: uid(), title: "Ejemplo: enviar reporte semanal", desc: "", cat: "trabajo", prio: "media", due: dateOffset(1), done: false, progress: 0, seconds: 0, running: null, created: now - 1000 }
+      { id: uid(), title: "Ejemplo: preparar presentación de clase", desc: "Diapositivas + guion de 10 min", cat: "universidad", prio: "alta", due: dateOffset(3), done: false, progress: 30, seconds: 0, running: null, created: now, people: ["Yo", "Ana"], subtasks: [{ text: "Armar el guion", done: true }, { text: "Diseñar diapositivas", done: false }, { text: "Ensayar", done: false }] },
+      { id: uid(), title: "Ejemplo: enviar reporte semanal", desc: "", cat: "trabajo", prio: "media", due: dateOffset(1), done: false, progress: 0, seconds: 0, running: null, created: now - 1000, people: ["Yo"], subtasks: [] }
     ];
   }
   function uid() { return Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }
@@ -383,6 +423,20 @@ select { cursor: pointer; }
     return m + "m";
   }
 
+  // Progress comes from the checklist when it has items; otherwise from the slider.
+  function taskProgress(t) {
+    if (t.subtasks && t.subtasks.length) {
+      var d = t.subtasks.filter(function (s) { return s.done; }).length;
+      return Math.round((d / t.subtasks.length) * 100);
+    }
+    return t.progress || 0;
+  }
+  function initials(name) {
+    var parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].slice(0, 2);
+    return parts[0][0] + parts[parts.length - 1][0];
+  }
+
   // ---- Rendering ----
   var listEl = document.getElementById("list");
   var statsEl = document.getElementById("stats");
@@ -390,7 +444,7 @@ select { cursor: pointer; }
   function visibleTasks() {
     var arr = tasks.filter(function (t) {
       if (filter !== "todas" && t.cat !== filter) return false;
-      if (query && (t.title + " " + (t.desc || "")).toLowerCase().indexOf(query) === -1) return false;
+      if (query && (t.title + " " + (t.desc || "") + " " + (t.people || []).join(" ")).toLowerCase().indexOf(query) === -1) return false;
       return true;
     });
     var prioRank = { alta: 0, media: 1, baja: 2 };
@@ -401,13 +455,30 @@ select { cursor: pointer; }
         return a.due.localeCompare(b.due);
       }
       if (sortBy === "priority") return prioRank[a.prio] - prioRank[b.prio];
-      if (sortBy === "progress") return (b.progress || 0) - (a.progress || 0);
+      if (sortBy === "progress") return taskProgress(b) - taskProgress(a);
       return b.created - a.created;
     });
     return arr;
   }
 
+  function renderAlert() {
+    var bar = document.getElementById("alertBar");
+    var today = todayStr();
+    var overdue = tasks.filter(function (t) { return !t.done && t.due && t.due < today; });
+    var dueToday = tasks.filter(function (t) { return !t.done && t.due === today; });
+    if (!overdue.length && !dueToday.length) { bar.innerHTML = ""; return; }
+    var parts = [];
+    if (overdue.length) parts.push(overdue.length + " atrasada" + (overdue.length > 1 ? "s" : ""));
+    if (dueToday.length) parts.push(dueToday.length + " para hoy");
+    var danger = overdue.length > 0;
+    bar.innerHTML = '<div class="alert-bar ' + (danger ? "danger" : "") + '">' +
+      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>' +
+      'Tienes ' + parts.join(" y ") + '. Revisa para que no se te pase nada.' +
+      '</div>';
+  }
+
   function render() {
+    renderAlert();
     renderStats();
     var arr = visibleTasks();
     listEl.innerHTML = "";
@@ -444,6 +515,8 @@ select { cursor: pointer; }
     el.className = "card cat-" + t.cat + (t.done ? " done" : "");
     var over = !t.done && t.due && t.due < todayStr();
     var sec = elapsed(t);
+    var pct = taskProgress(t);
+    var hasSubs = t.subtasks && t.subtasks.length;
 
     el.innerHTML =
       '<button class="check ' + (t.done ? "on" : "") + '" title="Marcar como hecha">' +
@@ -454,12 +527,29 @@ select { cursor: pointer; }
           '<span class="title">' + esc(t.title) + '</span>' +
           '<span class="chip ' + t.cat + '">' + (t.cat === "universidad" ? "Universidad" : "Trabajo") + '</span>' +
           '<span class="chip ' + t.prio + '">' + cap(t.prio) + '</span>' +
+          (t.people && t.people.length ? '<span class="assignees">' +
+            t.people.slice(0, 4).map(function (p) { return '<span class="avatar" title="' + esc(p) + '">' + esc(initials(p)) + '</span>'; }).join("") +
+            (t.people.length > 4 ? '<span class="avatar">+' + (t.people.length - 4) + '</span>' : '') +
+          '</span>' : '') +
         '</div>' +
         (t.desc ? '<div class="desc">' + esc(t.desc) + '</div>' : '') +
-        '<div class="progress-wrap"><div class="progress-row">' +
-          '<input type="range" min="0" max="100" step="5" value="' + (t.progress || 0) + '" data-prog>' +
-          '<span class="pval">' + (t.progress || 0) + '%</span>' +
-        '</div></div>' +
+        '<div class="progress-wrap">' +
+          (hasSubs
+            ? '<div class="progress-row"><div style="flex:1;height:8px;background:var(--surface-2);border-radius:99px;overflow:hidden"><i style="display:block;height:100%;border-radius:99px;background:var(--ok);width:' + pct + '%;transition:width .3s"></i></div><span class="pval">' + pct + '%</span></div>'
+            : '<div class="progress-row"><input type="range" min="0" max="100" step="5" value="' + (t.progress || 0) + '" data-prog><span class="pval">' + (t.progress || 0) + '%</span></div>') +
+          '<div class="checklist">' +
+            (t.subtasks || []).map(function (s, i) {
+              return '<div class="sub ' + (s.done ? "done" : "") + '">' +
+                '<button class="sbox ' + (s.done ? "on" : "") + '" data-sub="' + i + '">' +
+                  (s.done ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>' : '') +
+                '</button>' +
+                '<span class="stext">' + esc(s.text) + '</span>' +
+                '<button class="srem" data-subrem="' + i + '" title="Quitar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>' +
+              '</div>';
+            }).join("") +
+            '<div class="addsub"><input data-subinput placeholder="Agregar paso..."><button data-subadd>Añadir paso</button></div>' +
+          '</div>' +
+        '</div>' +
         '<div class="timer ' + (t.running ? "running" : "") + '">' +
           '<button class="tbtn ' + (t.running ? "" : "play") + '" data-toggle title="' + (t.running ? "Pausar" : "Iniciar") + '">' +
             (t.running
@@ -488,9 +578,22 @@ select { cursor: pointer; }
     el.querySelector("[data-toggle]").onclick = function () { toggleTimer(t.id); };
     el.querySelector("[data-reset]").onclick = function () { resetTimer(t.id); };
     var range = el.querySelector("[data-prog]");
-    var pval = el.querySelector(".pval");
-    range.oninput = function () { pval.textContent = range.value + "%"; };
-    range.onchange = function () { setProgress(t.id, parseInt(range.value, 10)); };
+    if (range) {
+      var pval = el.querySelector(".pval");
+      range.oninput = function () { pval.textContent = range.value + "%"; };
+      range.onchange = function () { setProgress(t.id, parseInt(range.value, 10)); };
+    }
+    el.querySelectorAll("[data-sub]").forEach(function (b) {
+      b.onclick = function () { toggleSub(t.id, parseInt(b.dataset.sub, 10)); };
+    });
+    el.querySelectorAll("[data-subrem]").forEach(function (b) {
+      b.onclick = function () { removeSub(t.id, parseInt(b.dataset.subrem, 10)); };
+    });
+    var subInput = el.querySelector("[data-subinput]");
+    var subAdd = el.querySelector("[data-subadd]");
+    function doAdd() { if (subInput.value.trim()) { addSub(t.id, subInput.value.trim()); } }
+    subAdd.onclick = doAdd;
+    subInput.onkeydown = function (e) { if (e.key === "Enter") { e.preventDefault(); doAdd(); } };
 
     // Live timer
     if (t.running) {
@@ -546,6 +649,22 @@ select { cursor: pointer; }
     t.seconds = 0; t.running = null;
     save(); clearTicks(); render();
   }
+  function addSub(id, text) {
+    var t = byId(id); if (!t) return;
+    if (!t.subtasks) t.subtasks = [];
+    t.subtasks.push({ text: text, done: false });
+    save(); clearTicks(); render();
+  }
+  function toggleSub(id, i) {
+    var t = byId(id); if (!t || !t.subtasks[i]) return;
+    t.subtasks[i].done = !t.subtasks[i].done;
+    save(); clearTicks(); render();
+  }
+  function removeSub(id, i) {
+    var t = byId(id); if (!t || !t.subtasks) return;
+    t.subtasks.splice(i, 1);
+    save(); clearTicks(); render();
+  }
 
   function clearTicks() {
     Object.keys(ticking).forEach(function (k) { clearInterval(ticking[k]); });
@@ -566,6 +685,7 @@ select { cursor: pointer; }
       form.fCat.value = t.cat;
       form.fPrio.value = t.prio;
       form.fDue.value = t.due || "";
+      form.fPeople.value = (t.people || []).join(", ");
     } else {
       form.reset();
       form.fCat.value = filter !== "todas" ? filter : "universidad";
@@ -583,16 +703,18 @@ select { cursor: pointer; }
       desc: form.fDesc.value.trim(),
       cat: form.fCat.value,
       prio: form.fPrio.value,
-      due: form.fDue.value || ""
+      due: form.fDue.value || "",
+      people: form.fPeople.value.split(",").map(function (p) { return p.trim(); }).filter(Boolean)
     };
     if (!data.title) return;
     if (editingId) {
       var t = byId(editingId);
-      t.title = data.title; t.desc = data.desc; t.cat = data.cat; t.prio = data.prio; t.due = data.due;
+      t.title = data.title; t.desc = data.desc; t.cat = data.cat; t.prio = data.prio; t.due = data.due; t.people = data.people;
     } else {
       tasks.push({
         id: uid(), title: data.title, desc: data.desc, cat: data.cat, prio: data.prio,
-        due: data.due, done: false, progress: 0, seconds: 0, running: null, created: Date.now()
+        due: data.due, people: data.people, done: false, progress: 0, seconds: 0, running: null,
+        subtasks: [], created: Date.now()
       });
     }
     save(); closeModal(); clearTicks(); render();
