@@ -1126,25 +1126,70 @@ select { cursor: pointer; }
   // Heurísticas simples para rellenar la tarea a partir del texto leído.
   function fillFromText(text) {
     var lines = text.split("\n").map(function (l) { return l.trim(); }).filter(Boolean);
-    if (lines.length) form.fTitle.value = lines[0].slice(0, 90);
-    form.fDesc.value = lines.slice(1).join("\n").slice(0, 800);
+
+    // Fecha límite: primero la que sigue a "Cierre/Entrega/Vence/Límite".
+    var due = findDueDate(text);
+    if (due) form.fDue.value = due;
+
+    // Título: la primera línea "de verdad" (no basura, no migas de pan, no fecha).
+    var title = "";
+    for (var i = 0; i < lines.length; i++) {
+      var ln = lines[i];
+      if (ln.length < 12) continue;                                   // muy corta (ej: "o)")
+      if (/[>›»]/.test(ln)) continue;                                 // migas de pan
+      if (/^[\W_]+$/.test(ln)) continue;                              // solo símbolos
+      if (/^(apertura|cierre|entrega|fecha|vence|hasta)\b/i.test(ln)) continue;
+      if (/\b\d{1,2}\s+de\s+[a-záéíóú]+\s+de\s+\d{4}\b/i.test(ln)) continue; // línea de fecha
+      title = ln; break;
+    }
+    if (!title && lines.length) title = lines[0];
+    title = dedupe(title).slice(0, 100);
+    form.fTitle.value = title;
+
+    // Detalle: el resto, quitando la línea que quedó como título.
+    var desc = lines.filter(function (l) { return l.length > 1 && dedupe(l).slice(0, 100) !== title; }).join("\n");
+    form.fDesc.value = desc.slice(0, 1200);
 
     var low = text.toLowerCase();
-    if (/\b(clase|profesor|profesora|universidad|examen|parcial|semestre|c[aá]tedra|materia|laboratorio|ensayo|tesis)\b/.test(low)) {
+    if (/\b(clase|profesor|profesora|universidad|examen|parcial|semestre|c[aá]tedra|materia|laboratorio|ensayo|tesis|taller|aula|corte)\b/.test(low)) {
       form.fCat.value = "universidad";
-    } else if (/\b(trabajo|jefe|reuni[oó]n|cliente|reporte|informe|oficina|proyecto|equipo|entrega)\b/.test(low)) {
+    } else if (/\b(trabajo|jefe|reuni[oó]n|cliente|reporte|informe|oficina|proyecto|equipo)\b/.test(low)) {
       form.fCat.value = "trabajo";
     }
     if (/\b(urgente|hoy|inmediato|prioridad alta|importante)\b/.test(low)) form.fPrio.value = "alta";
+  }
 
-    var iso = text.match(/(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
-    var dmy = text.match(/\b(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})\b/);
-    if (iso) {
-      form.fDue.value = iso[1] + "-" + pad2(iso[2]) + "-" + pad2(iso[3]);
-    } else if (dmy) {
-      var yy = dmy[3].length === 2 ? "20" + dmy[3] : dmy[3];
-      form.fDue.value = yy + "-" + pad2(dmy[2]) + "-" + pad2(dmy[1]);
+  // El OCR a veces repite la frase ("Taller X desde la Taller X desde la ..."). La colapsamos.
+  function dedupe(s) {
+    if (!s) return s;
+    var words = s.split(/\s+/);
+    if (words.length < 4) return s;
+    var key = words.slice(0, 3).join(" ").toLowerCase();
+    var low = s.toLowerCase();
+    var first = low.indexOf(key);
+    if (first > -1) {
+      var second = low.indexOf(key, first + key.length);
+      if (second > -1) return s.slice(second).trim();
     }
+    return s;
+  }
+
+  var MESES_ES = { enero: 1, febrero: 2, marzo: 3, abril: 4, mayo: 5, junio: 6, julio: 7, agosto: 8, septiembre: 9, setiembre: 9, octubre: 10, noviembre: 11, diciembre: 12 };
+  function findDueDate(text) {
+    function iso(d, mes, y) { var m = MESES_ES[String(mes).toLowerCase()]; return m ? (y + "-" + pad2(m) + "-" + pad2(d)) : ""; }
+    // 1) fecha en español que sigue a una palabra de entrega
+    var mk = text.match(/(cierre|entrega|vence|fecha\s*l[ií]mite|hasta)[^0-9]{0,40}?(\d{1,2})\s+de\s+([a-záéíóú]+)\s+de\s+(\d{4})/i);
+    if (mk) { var r1 = iso(mk[2], mk[3], mk[4]); if (r1) return r1; }
+    // 2) cualquier fecha en español (la última suele ser la de cierre)
+    var re = /(\d{1,2})\s+de\s+([a-záéíóú]+)\s+de\s+(\d{4})/ig, m, last = null;
+    while ((m = re.exec(text))) last = m;
+    if (last) { var r2 = iso(last[1], last[2], last[3]); if (r2) return r2; }
+    // 3) formatos numéricos
+    var isoNum = text.match(/(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+    if (isoNum) return isoNum[1] + "-" + pad2(isoNum[2]) + "-" + pad2(isoNum[3]);
+    var dmy = text.match(/\b(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})\b/);
+    if (dmy) { var yy = dmy[3].length === 2 ? "20" + dmy[3] : dmy[3]; return yy + "-" + pad2(dmy[2]) + "-" + pad2(dmy[1]); }
+    return "";
   }
   function pad2(n) { n = String(n); return n.length < 2 ? "0" + n : n; }
 
