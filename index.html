@@ -266,9 +266,15 @@ select { cursor: pointer; }
 .sub-note::placeholder { color: var(--text-faint); }
 .sub-note:hover { border-color: var(--border); }
 .sub-note:focus { border-color: var(--accent); background: var(--surface); color: var(--text); }
-.task-note { width: 100%; margin-top: 12px; padding: 8px 10px; font-size: 13px; color: var(--text); background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; }
-.task-note::placeholder { color: var(--text-faint); }
-.task-note:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.notes { margin-top: 14px; }
+.notes-h { font-size: 12px; font-weight: 700; color: var(--text-soft); margin-bottom: 6px; }
+.notes-h span { background: var(--accent-soft); color: var(--accent); border-radius: 99px; padding: 0 7px; font-size: 11px; margin-left: 2px; }
+.note-item { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.note-in { flex: 1; min-width: 0; padding: 7px 10px; font-size: 13px; color: var(--text); background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; }
+.note-in:focus { outline: none; border-color: var(--accent); background: var(--surface); box-shadow: 0 0 0 3px var(--accent-soft); }
+.note-date { font-size: 10.5px; color: var(--text-faint); white-space: nowrap; flex-shrink: 0; }
+.note-rem { background: none; border: none; color: var(--text-faint); cursor: pointer; padding: 3px; border-radius: 5px; display: grid; place-items: center; flex-shrink: 0; }
+.note-rem:hover { color: var(--danger); background: var(--surface-2); }
 .addsub { display: flex; gap: 6px; margin-top: 4px; }
 .addsub input { padding: 6px 10px; font-size: 13px; }
 .addsub button { border: 1px dashed var(--border); background: none; color: var(--text-soft); border-radius: 8px; padding: 6px 12px; cursor: pointer; font: inherit; font-size: 13px; white-space: nowrap; }
@@ -833,6 +839,7 @@ select { cursor: pointer; }
     var cur = statusFor(t);
     var subs = t.subtasks || [];
     var sdone = subs.filter(function (s) { return s.done; }).length;
+    var notesArr = taskNotes(t);
 
     el.innerHTML =
       '<button class="check ' + (t.done ? "on" : "") + '" title="Marcar como hecha">' +
@@ -882,7 +889,17 @@ select { cursor: pointer; }
           }).join("") +
           '<div class="addsub"><input data-subinput placeholder="Agregar paso..."><button data-subadd>Añadir paso</button></div>' +
         '</div>' +
-        '<input class="task-note" data-tasknote placeholder="Nota de la tarea (qué falta, dónde quedó)..." value="' + esc(t.note || "") + '">' +
+        '<div class="notes">' +
+          '<div class="notes-h">Notas' + (notesArr.length ? ' <span>' + notesArr.length + '</span>' : '') + '</div>' +
+          notesArr.map(function (n, i) {
+            return '<div class="note-item">' +
+              '<input class="note-in" data-noteedit="' + i + '" value="' + esc(n.text) + '">' +
+              (n.ts ? '<span class="note-date">' + esc(fmtDateTime(n.ts)) + '</span>' : '') +
+              '<button class="note-rem" data-noterem="' + i + '" title="Quitar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>' +
+            '</div>';
+          }).join("") +
+          '<div class="addsub"><input data-noteinput placeholder="Escribe una nota..."><button data-noteadd>Agregar nota</button></div>' +
+        '</div>' +
         (t.due ? '<div class="meta">' +
           '<span class="m ' + dueClass(t) + '"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>' + esc(dueLabel(t)) + '</span>' +
         '</div>' : "") +
@@ -917,8 +934,17 @@ select { cursor: pointer; }
     el.querySelectorAll("[data-sdown]").forEach(function (b) {
       b.onclick = function () { moveSub(t.id, parseInt(b.dataset.sdown, 10), 1); };
     });
-    var tnote = el.querySelector("[data-tasknote]");
-    if (tnote) tnote.onchange = function () { setTaskNote(t.id, tnote.value); };
+    el.querySelectorAll("[data-noteedit]").forEach(function (inp) {
+      inp.onchange = function () { editNote(t.id, parseInt(inp.dataset.noteedit, 10), inp.value); };
+    });
+    el.querySelectorAll("[data-noterem]").forEach(function (b) {
+      b.onclick = function () { removeNote(t.id, parseInt(b.dataset.noterem, 10)); };
+    });
+    var noteInput = el.querySelector("[data-noteinput]");
+    var noteAdd = el.querySelector("[data-noteadd]");
+    function doAddNote() { if (noteInput.value.trim()) addNote(t.id, noteInput.value.trim()); }
+    noteAdd.onclick = doAddNote;
+    noteInput.onkeydown = function (e) { if (e.key === "Enter") { e.preventDefault(); doAddNote(); } };
     var subInput = el.querySelector("[data-subinput]");
     var subAdd = el.querySelector("[data-subadd]");
     function doAdd() { if (subInput.value.trim()) { addSub(t.id, subInput.value.trim()); } }
@@ -988,10 +1014,28 @@ select { cursor: pointer; }
     t.subtasks[i].note = note;
     save(); // sin re-render, para no interrumpir mientras escribes
   }
-  function setTaskNote(id, note) {
+  // Notas de la tarea (varias). Migra la nota única antigua a la lista.
+  function taskNotes(t) {
+    if (!Array.isArray(t.notes)) {
+      t.notes = t.note ? [{ text: t.note, ts: t.created || Date.now() }] : [];
+      delete t.note;
+    }
+    return t.notes;
+  }
+  function addNote(id, text) {
     var t = byId(id); if (!t) return;
-    t.note = note;
-    save(); // sin re-render
+    taskNotes(t).push({ text: text, ts: Date.now() });
+    save(); clearTicks(); render();
+  }
+  function editNote(id, i, text) {
+    var t = byId(id); var arr = taskNotes(t); if (!arr[i]) return;
+    arr[i].text = text;
+    save(); // sin re-render, para no interrumpir mientras escribes
+  }
+  function removeNote(id, i) {
+    var t = byId(id); var arr = taskNotes(t); if (!arr[i]) return;
+    arr.splice(i, 1);
+    save(); clearTicks(); render();
   }
 
   function clearTicks() {
@@ -1822,6 +1866,11 @@ select { cursor: pointer; }
     var d = new Date(parts[0], parts[1] - 1, parts[2]);
     var months = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
     return d.getDate() + " " + months[d.getMonth()] + " " + d.getFullYear();
+  }
+  function fmtDateTime(ts) {
+    var d = new Date(ts);
+    function p(n) { return (n < 10 ? "0" : "") + n; }
+    return fmtDate(d.toISOString().slice(0, 10)) + " · " + p(d.getHours()) + ":" + p(d.getMinutes());
   }
   function daysUntil(iso) {
     var p = iso.split("-"), due = new Date(p[0], p[1] - 1, p[2]);
