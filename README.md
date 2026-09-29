@@ -39,6 +39,14 @@ Abre `index.html` con doble clic y listo. También puedes subirla a Netlify (ver
 - Instalarla en el celular como app (Agregar a pantalla de inicio) para abrirla a pantalla completa.
 - Saltar a tu app de gastos con el botón de la cabecera.
 
+## Dónde funciona
+
+- **Celular:** diseño pensado para pantalla pequeña; el resumen y los filtros ocupan poco para que veas tus tareas enseguida. Se puede instalar desde el navegador ("Agregar a pantalla de inicio") y abrirla a pantalla completa.
+- **Computador:** el contenido se centra y aprovecha el ancho sin estirarse de más.
+- **Sin conexión:** te avisa arriba y puedes seguir trabajando; los cambios se guardan en el equipo y se sincronizan con Drive cuando vuelve la conexión. La lectura de pantallazos sí necesita internet la primera vez.
+- **Almacenamiento lleno:** si el navegador se queda sin espacio te avisa y te dice qué hacer, en vez de fallar en silencio.
+- **Impresión:** al imprimir salen solo las tareas, sin botones ni filtros, con fondo blanco y sin cortar tarjetas por la mitad.
+
 ## Lectura de pantallazos (OCR)
 
 Al subir una captura, el texto se lee dentro del navegador con OCR (Tesseract.js). No se envía a ningún servidor ni necesita cuenta ni clave. La primera vez descarga los datos de idioma desde internet, así que conviene tener conexión. Rellena el título, el detalle y, si los detecta, la categoría, la prioridad y la fecha. Es una ayuda, no magia: revisa siempre lo que quedó.

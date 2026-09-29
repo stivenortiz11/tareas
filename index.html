@@ -126,7 +126,11 @@ header { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-
 
 /* Toolbar */
 .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 20px; }
-.tabs { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 4px; overflow-x: auto; max-width: 100%; scrollbar-width: none; }
+.tabs { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 4px; overflow-x: auto; max-width: 100%; min-width: 0; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.tabs .tab { flex: none; }
+/* Los desplegables no deben estirarse por el texto de una opción larga */
+.toolbar select { max-width: 100%; text-overflow: ellipsis; }
+.toolbar > * { min-width: 0; }
 .tabs::-webkit-scrollbar { display: none; }
 .tcount { margin-left: 6px; font-size: 11px; font-weight: 700; background: var(--surface-2); color: var(--text-soft); border-radius: 99px; padding: 1px 6px; }
 .tab.active .tcount { background: var(--accent); color: #fff; }
@@ -357,6 +361,9 @@ select { cursor: pointer; }
   border-radius: var(--radius); padding: 12px 16px; margin-bottom: 20px; font-size: 14px;
   font-weight: 500; display: flex; gap: 10px; align-items: center;
 }
+.sys-bar { display: flex; align-items: center; gap: 10px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 14px; font-size: 13px; color: var(--text-soft); }
+.sys-bar.warn { background: var(--work-soft); border-color: var(--work); color: var(--work); font-weight: 600; }
+.sys-bar svg { flex-shrink: 0; }
 .alert-bar.danger { background: var(--danger-soft); color: var(--danger); }
 .alert-bar svg { flex-shrink: 0; }
 
@@ -484,12 +491,51 @@ body.compacto .status-wrap { margin-top: 8px; }
 .backup-bar .btn.ghost { font-size: 13px; }
 .foot-note { text-align: center; margin-top: 14px; font-size: 12px; color: var(--text-faint); }
 
+/* Foco visible para quien navega con teclado */
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+
+/* Impresión: solo las tareas, limpio y sin controles */
+@media print {
+  .header-actions, .toolbar, .alert-bar, .sys-bar, .backup-bar, .foot-note,
+  .card-actions, .addsub, .status-pills, #byMateriaToggle, .gate,
+  .note-eye, .note-rem, .srem, .sord, .day-chip, .bulk-bar { display: none !important; }
+  body { background: #fff; color: #000; }
+  .wrap { max-width: none; padding: 0; }
+  .card, .stat, .cal, .today-panel, .plan { box-shadow: none !important; border-color: #ccc !important; break-inside: avoid; page-break-inside: avoid; }
+  .card { animation: none; }
+  .group-h { break-after: avoid; }
+}
+
 @media (max-width: 640px) {
-  .stats { grid-template-columns: repeat(2, 1fr); }
+  .wrap { padding: 16px 14px 72px; }
+  /* Resumen mas compacto: se llega antes a las tareas */
+  .stats { grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 14px; }
+  .stat { padding: 11px 13px; }
+  .stat .num { font-size: 20px; }
+  .stat .lbl { font-size: 11px; }
+  .stat .bar { margin-top: 7px; }
+  /* Barra de filtros en menos filas */
+  .toolbar { gap: 8px; margin-bottom: 16px; }
+  .toolbar .tabs { order: 1; flex: 1 0 100%; }
+  .toolbar .grow { order: 2; flex: 1 0 100%; width: 100%; }
+  #materiaFilter, #sort { order: 3; flex: 1 1 calc(50% - 4px); min-width: 0; width: auto; }
+  #compactBtn { order: 4; flex: none; }
+  #addBtn { order: 4; flex: 1; justify-content: center; }
   .field .row2 { grid-template-columns: 1fr; }
-  .toolbar .grow { order: 3; width: 100%; flex: 1 0 100%; }
   .hide-sm { display: none; }
   .header-actions .btn.ghost { padding: 10px; }
+  header { gap: 12px; }
+  .logo h1 { font-size: 18px; }
+  /* Calendario legible en pantalla chica */
+  .cal { padding: 10px; }
+  .cal-cell { min-height: 46px; padding: 3px; }
+  .cal-legend { font-size: 11px; gap: 10px; }
+  .cal-hint { flex: 1 0 100%; margin-left: 0; }
+  .cal-li-d { min-width: 100%; }
+}
+@media (max-width: 380px) {
+  .stats { grid-template-columns: 1fr 1fr; }
+  .cal-cell { min-height: 40px; }
 }
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -532,6 +578,7 @@ body.compacto .status-wrap { margin-top: 8px; }
     </div>
   </header>
 
+  <div id="sysBar"></div>
   <div id="alertBar"></div>
 
   <section class="stats" id="stats"></section>
@@ -804,7 +851,13 @@ body.compacto .status-wrap { margin-top: 8px; }
     } catch (e) { return seed(); }
   }
   function save() {
-    try { localStorage.setItem(KEY, JSON.stringify(tasks)); } catch (e) {}
+    try {
+      localStorage.setItem(KEY, JSON.stringify(tasks));
+      if (almacenamientoLleno) { almacenamientoLleno = false; renderSysBar(); }
+    } catch (e) {
+      if (!almacenamientoLleno) { almacenamientoLleno = true; renderSysBar(); }
+      console.warn("No se pudo guardar en el navegador:", e);
+    }
     if (driveToken) scheduleDriveSave();
   }
   function snapshot() { return { tasks: tasks, horario: horario, horarioData: horarioData, materias: MATERIAS }; }
@@ -977,6 +1030,7 @@ body.compacto .status-wrap { margin-top: 8px; }
   function dateStrPlus(n) { var d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
 
   function render() {
+    renderSysBar();
     renderAlert();
     renderStats();
     renderTabCounts();
@@ -1200,7 +1254,7 @@ body.compacto .status-wrap { margin-top: 8px; }
     var enProg = tasks.filter(function (t) { return !t.done && statusFor(t).key !== "sin_revisar"; }).length;
     statsEl.innerHTML =
       stat(total, "Tareas en total") +
-      stat(pending, overdue ? overdue + " atrasada" + (overdue > 1 ? "s" : "") : "Pendientes", overdue ? "danger" : "") +
+      stat(pending, overdue ? "Pendientes · " + overdue + " atrasada" + (overdue > 1 ? "s" : "") : "Pendientes", overdue ? "danger" : "") +
       statBar(pct, done + " de " + total + " completadas") +
       stat(enProg, "En progreso");
     renderByMateria();
@@ -1985,6 +2039,7 @@ body.compacto .status-wrap { margin-top: 8px; }
   shotInput.onchange = function () {
     var file = shotInput.files && shotInput.files[0];
     if (!file) return;
+    if (!navigator.onLine) { setShot("Sin conexión: el lector necesita internet la primera vez. Escribe la tarea a mano.", "err"); return; }
     if (typeof Tesseract === "undefined") { setShot("El lector aún no cargó. Espera unos segundos y reintenta.", "err"); return; }
     shotText.textContent = file.name;
     setShot("Leyendo el texto de la imagen...", "load");
@@ -2404,6 +2459,28 @@ body.compacto .status-wrap { margin-top: 8px; }
       img.src = url;
     });
   }
+
+  // ---- Estado del entorno: conexión y almacenamiento ----
+  var almacenamientoLleno = false;
+  function renderSysBar() {
+    var bar = document.getElementById("sysBar");
+    if (!bar) return;
+    var msgs = [];
+    if (!navigator.onLine) msgs.push({ warn: false, txt: "Sin conexión. Puedes seguir trabajando: se guarda aquí y se sincroniza cuando vuelva." });
+    if (almacenamientoLleno) msgs.push({ warn: true, txt: "El almacenamiento del navegador está lleno. Quita la imagen del horario o descarga una copia y borra tareas viejas." });
+    bar.innerHTML = msgs.map(function (m) {
+      return '<div class="sys-bar' + (m.warn ? " warn" : "") + '">' +
+        '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        (m.warn ? '<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/>'
+                : '<path d="M2 2 22 22M8.5 16.5a5 5 0 0 1 7 0M5 12.9a10 10 0 0 1 5.2-2.8M2 8.8a15 15 0 0 1 4.2-2.5M20.9 12.9a10 10 0 0 0-3.6-2.5M22 8.8a15 15 0 0 0-5.3-3M12 20h.01"/>') +
+        "</svg><span>" + m.txt + "</span></div>";
+    }).join("");
+  }
+  window.addEventListener("offline", renderSysBar);
+  window.addEventListener("online", function () {
+    renderSysBar();
+    if (driveToken && driveFileId) pushToDrive();   // reintenta lo que quedó pendiente
+  });
 
   // ---- Recordatorios ----
   var notifyBtn = document.getElementById("notifyBtn");
