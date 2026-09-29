@@ -15,6 +15,13 @@ Abre `index.html` con doble clic y listo. También puedes subirla a Netlify (ver
 - Cronometrar el tiempo por tarea con play y pausa. Solo corre un cronómetro a la vez para que el total sea real.
 - Ver un aviso arriba cuando hay tareas atrasadas o para hoy.
 - Crear una tarea desde un pantallazo: subes la captura, se lee el texto y se rellenan los campos. Luego revisas y ajustas.
+- Vista **Hoy**: tus clases del día según el horario, más lo atrasado y lo que vence en los próximos 7 días.
+- Vista **Calendario**: mes completo con las entregas marcadas por color (atrasada, pendiente, terminada). Tocas un día y ves sus tareas.
+- Ver el **avance por materia**: cuántas llevas hechas, el porcentaje y cuántas están atrasadas.
+- Guardar un **enlace** en cada tarea (aula virtual, ticket) y abrirlo desde la tarjeta.
+- **Duplicar** una tarea, y borrar de una vez todas las realizadas.
+- Contadores en las pestañas y atajos de teclado (N para nueva tarea, / para buscar).
+- Elegir con cuánta antelación quieres el aviso (mismo día, 1, 2, 3, 5 o 7 días).
 - Buscar, filtrar por materia y ordenar por fecha, prioridad, progreso o materia. Tema claro y oscuro.
 - Ver la fecha con aviso claro: "hoy", "mañana", "en 2 días" o "atrasada 3 días".
 - Ver tu horario recreado como tabla semanal editable (botón "Horario"): agregar, editar y quitar clases con día, hora y salón. También puedes subir el pantallazo original.

@@ -126,7 +126,11 @@ header { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-
 
 /* Toolbar */
 .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 20px; }
-.tabs { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 4px; }
+.tabs { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 4px; overflow-x: auto; max-width: 100%; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tcount { margin-left: 6px; font-size: 11px; font-weight: 700; background: var(--surface-2); color: var(--text-soft); border-radius: 99px; padding: 1px 6px; }
+.tab.active .tcount { background: var(--accent); color: #fff; }
+.tcount:empty { display: none; }
 .tab {
   border: none; background: none; padding: 8px 14px; border-radius: 8px; cursor: pointer;
   font: inherit; font-size: 13px; font-weight: 500; color: var(--text-soft); transition: .15s;
@@ -191,6 +195,8 @@ select { cursor: pointer; }
 .meta .m { display: inline-flex; align-items: center; gap: 5px; }
 .meta .m.overdue { color: var(--danger); font-weight: 600; }
 .meta .m.soon { color: var(--work); font-weight: 600; }
+.meta .mlink { color: var(--accent); text-decoration: none; font-weight: 600; }
+.meta .mlink:hover { text-decoration: underline; }
 .progress-wrap { margin-top: 12px; }
 .progress-row { display: flex; align-items: center; gap: 10px; }
 .progress-row input[type=range] { flex: 1; accent-color: var(--accent); cursor: pointer; padding: 0; }
@@ -325,6 +331,8 @@ select { cursor: pointer; }
 .mrow span { flex: 1; font-size: 14px; }
 .mrem { background: none; border: none; color: var(--text-faint); cursor: pointer; display: grid; place-items: center; padding: 2px; }
 .mrem:hover { color: var(--danger); }
+.remind-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--text-soft); }
+.remind-row select { width: auto; }
 @keyframes pop { from { transform: translateY(12px) scale(.98); opacity: 0; } }
 .modal-head { padding: 20px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; }
 .modal-head h2 { font-size: 17px; font-weight: 700; }
@@ -341,6 +349,61 @@ select { cursor: pointer; }
 }
 .alert-bar.danger { background: var(--danger-soft); color: var(--danger); }
 .alert-bar svg { flex-shrink: 0; }
+
+/* Avance por materia */
+#byMateriaToggle { margin: -6px 0 14px; }
+.bym { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow); margin-bottom: 18px; display: flex; flex-direction: column; gap: 12px; }
+.bym-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.bym-name { font-size: 13px; font-weight: 600; border-left: 3px solid var(--accent); padding-left: 8px; }
+.bym-nums { font-size: 12px; color: var(--text-soft); font-variant-numeric: tabular-nums; }
+.bym-nums b { color: var(--danger); font-weight: 700; }
+.bym-bar { height: 6px; background: var(--surface-2); border-radius: 99px; overflow: hidden; margin-top: 6px; }
+.bym-bar i { display: block; height: 100%; border-radius: 99px; transition: width .3s; }
+
+/* Panel Hoy */
+.today-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow); }
+.today-h { font-size: 13px; font-weight: 700; color: var(--text-soft); margin-bottom: 10px; }
+.today-classes { display: flex; flex-wrap: wrap; gap: 8px; }
+.today-class { display: flex; flex-direction: column; gap: 1px; background: var(--surface-2); border-left: 3px solid var(--accent); border-radius: 8px; padding: 8px 11px; min-width: 150px; }
+.tc-time { font-size: 11px; font-weight: 600; color: var(--text-soft); font-variant-numeric: tabular-nums; }
+.tc-mat { font-size: 13px; font-weight: 600; }
+.tc-room { font-size: 11.5px; color: var(--text-soft); }
+.today-none { font-size: 13px; color: var(--text-soft); margin: 0; }
+
+/* Chip de día y acciones masivas */
+.day-chip, .bulk-bar { display: flex; align-items: center; gap: 10px; justify-content: space-between; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 9px 14px; font-size: 13px; color: var(--text-soft); }
+.day-chip button, .bulk-bar button { background: none; border: none; color: var(--accent); font: inherit; font-size: 12.5px; cursor: pointer; text-decoration: underline; }
+.bulk-bar button { color: var(--danger); }
+
+/* Calendario */
+.cal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow); }
+.cal-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.cal-head button { background: none; border: 1px solid var(--border); color: var(--text-soft); border-radius: 8px; cursor: pointer; padding: 5px 7px; display: grid; place-items: center; }
+.cal-head button:hover { color: var(--accent); border-color: var(--accent); }
+.cal-title { flex: 1; text-align: center; font-weight: 700; font-size: 15px; }
+.cal-today-btn { font: inherit; font-size: 12px; font-weight: 600; padding: 5px 10px !important; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-dow { text-align: center; font-size: 11px; font-weight: 700; color: var(--text-faint); padding-bottom: 4px; }
+.cal-cell { min-height: 54px; border: 1px solid var(--border); border-radius: 8px; padding: 4px 5px; background: var(--surface-2); cursor: pointer; transition: .12s; display: flex; flex-direction: column; gap: 3px; }
+.cal-cell.blank { border: none; background: none; cursor: default; min-height: 0; }
+.cal-cell:hover:not(.blank) { border-color: var(--accent); }
+.cal-cell.today { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.cal-num { font-size: 12px; font-weight: 600; color: var(--text-soft); }
+.cal-cell.today .cal-num { color: var(--accent); }
+.cal-dots { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; }
+.cal-dots i { width: 7px; height: 7px; border-radius: 50%; display: block; }
+.cal-dots b { font-size: 9.5px; color: var(--text-faint); font-weight: 700; }
+.cal-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 12px; font-size: 11.5px; color: var(--text-soft); align-items: center; }
+.cal-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.cal-legend i { width: 8px; height: 8px; border-radius: 50%; display: block; }
+.cal-hint { margin-left: auto; color: var(--text-faint); }
+.cal-month-list { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow); }
+.cal-ml-h { font-size: 13px; font-weight: 700; color: var(--text-soft); margin-bottom: 8px; }
+.cal-li { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; padding: 6px 0; border-top: 1px solid var(--border); font-size: 13px; }
+.cal-li:first-of-type { border-top: none; }
+.cal-li-d { font-size: 11.5px; font-weight: 700; color: var(--text-soft); min-width: 92px; }
+.cal-li-t { background: var(--surface-2); border-radius: 6px; padding: 2px 8px; }
+.cal-li-t.done { text-decoration: line-through; color: var(--text-faint); }
 
 /* Screenshot upload */
 .shot-drop {
@@ -420,6 +483,9 @@ select { cursor: pointer; }
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
         <span class="hide-sm">Horario</span>
       </button>
+      <button class="icon-btn" id="settingsBtn" title="Materias y ajustes" aria-label="Materias y ajustes">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.14.35.4.63.73.8"/></svg>
+      </button>
       <button class="icon-btn" id="notifyBtn" title="Activar recordatorios" aria-label="Activar recordatorios">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
       </button>
@@ -432,13 +498,17 @@ select { cursor: pointer; }
   <div id="alertBar"></div>
 
   <section class="stats" id="stats"></section>
+  <button class="link-btn" id="byMateriaToggle">Ver avance por materia</button>
+  <div id="byMateriaPanel" hidden></div>
 
   <div class="toolbar">
     <div class="tabs" id="tabs">
-      <button class="tab active" data-cat="todas">Todas</button>
-      <button class="tab" data-cat="universidad">Universidad</button>
-      <button class="tab" data-cat="trabajo">Trabajo</button>
-      <button class="tab" data-cat="realizadas">Realizadas</button>
+      <button class="tab" data-cat="hoy">Hoy<span class="tcount" data-c="hoy"></span></button>
+      <button class="tab active" data-cat="todas">Todas<span class="tcount" data-c="todas"></span></button>
+      <button class="tab" data-cat="universidad">Universidad<span class="tcount" data-c="universidad"></span></button>
+      <button class="tab" data-cat="trabajo">Trabajo<span class="tcount" data-c="trabajo"></span></button>
+      <button class="tab" data-cat="calendario">Calendario</button>
+      <button class="tab" data-cat="realizadas">Realizadas<span class="tcount" data-c="realizadas"></span></button>
     </div>
     <div class="grow search">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
@@ -495,7 +565,7 @@ select { cursor: pointer; }
 <div class="overlay" id="materiasOverlay">
   <div class="modal">
     <div class="modal-head">
-      <h2>Mis materias</h2>
+      <h2>Materias y ajustes</h2>
       <button id="closeMaterias" aria-label="Cerrar">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
       </button>
@@ -569,6 +639,10 @@ select { cursor: pointer; }
           <input id="fDue" type="date">
         </div>
         <div class="field">
+          <label for="fLink">Enlace (opcional)</label>
+          <input id="fLink" type="url" placeholder="https://aula.virtual/... o el ticket">
+        </div>
+        <div class="field">
           <label for="fMateria">Materia (universidad, opcional)</label>
           <input id="fMateria" list="materiasList" placeholder="Elige o escribe la materia" autocomplete="off">
           <datalist id="materiasList"></datalist>
@@ -614,6 +688,7 @@ select { cursor: pointer; }
   var HORARIO_KEY = "organizador_horario";
   var HORARIO_DATA_KEY = "organizador_horario_data";
   var MATERIAS_KEY = "organizador_materias";
+  var REMIND_KEY = "organizador_dias_aviso";
   var DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
   var DRIVE_FILE_KEY = "organizador_drive_file_id";
   var DRIVE_FILE_NAME = "organizador-tareas.json";
@@ -622,6 +697,10 @@ select { cursor: pointer; }
   var tasks = load();
   var filter = "todas";
   var materiaFilterVal = "todas";
+  var remindDays = 2;       // avisar con esta antelación
+  try { var rd = parseInt(localStorage.getItem(REMIND_KEY), 10); if (rd >= 0 && rd <= 14) remindDays = rd; } catch (e) {}
+  var dayFilter = "";       // día concreto elegido en el calendario (YYYY-MM-DD)
+  var calCursor = null;     // mes que muestra el calendario
   var query = "";
   var sortBy = "created";
   var editingId = null;
@@ -750,12 +829,18 @@ select { cursor: pointer; }
 
   function visibleTasks() {
     var showDone = filter === "realizadas";
+    var isHoy = filter === "hoy";
+    var limite = dateStrPlus(7);
     var arr = tasks.filter(function (t) {
       if (showDone) { if (!t.done) return false; }
-      else {
-        if (t.done) return false;                                  // las terminadas van a "Realizadas"
+      else if (isHoy) {
+        if (t.done) return false;
+        if (!t.due || t.due > limite) return false;                // atrasadas, hoy y próximos 7 días
+      } else {
+        if (t.done && !dayFilter) return false;                    // las terminadas van a "Realizadas"
         if (filter !== "todas" && t.cat !== filter) return false;
       }
+      if (dayFilter && t.due !== dayFilter) return false;           // día elegido en el calendario
       if (materiaFilterVal !== "todas" && (t.materia || "") !== materiaFilterVal) return false;
       if (query && (t.title + " " + (t.desc || "") + " " + (t.materia || "") + " " + (t.people || []).join(" ")).toLowerCase().indexOf(query) === -1) return false;
       return true;
@@ -763,6 +848,7 @@ select { cursor: pointer; }
     var prioRank = { alta: 0, media: 1, baja: 2 };
     arr.sort(function (a, b) {
       if (showDone) return (b.doneAt || 0) - (a.doneAt || 0);       // finalizadas: las más recientes primero
+      if (isHoy) return (a.due || "").localeCompare(b.due || "");   // hoy: por fecha, lo más urgente primero
       if (sortBy === "due") {
         if (!a.due) return 1; if (!b.due) return -1;
         return a.due.localeCompare(b.due);
@@ -778,7 +864,7 @@ select { cursor: pointer; }
   function renderAlert() {
     var bar = document.getElementById("alertBar");
     var today = todayStr();
-    var plus2 = dateStrPlus(2);
+    var plus2 = dateStrPlus(remindDays);
     var overdue = tasks.filter(function (t) { return !t.done && t.due && t.due < today; });
     var dueToday = tasks.filter(function (t) { return !t.done && t.due === today; });
     var soon = tasks.filter(function (t) { return !t.done && t.due && t.due > today && t.due <= plus2; });
@@ -786,7 +872,7 @@ select { cursor: pointer; }
     var parts = [];
     if (overdue.length) parts.push(overdue.length + " atrasada" + (overdue.length > 1 ? "s" : ""));
     if (dueToday.length) parts.push(dueToday.length + " para hoy");
-    if (soon.length) parts.push(soon.length + " en los próximos 2 días");
+    if (soon.length) parts.push(soon.length + (remindDays === 1 ? " para mañana" : " en los próximos " + remindDays + " días"));
     var danger = overdue.length > 0;
     bar.innerHTML = '<div class="alert-bar ' + (danger ? "danger" : "") + '">' +
       '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>' +
@@ -798,18 +884,151 @@ select { cursor: pointer; }
   function render() {
     renderAlert();
     renderStats();
+    renderTabCounts();
     checkReminders(false);
-    var arr = visibleTasks();
     listEl.innerHTML = "";
+
+    if (filter === "calendario") { renderCalendario(); return; }
+    if (filter === "hoy") renderTodayPanel();
+    if (dayFilter) renderDayChip();
+
+    var arr = visibleTasks();
+    if (filter === "realizadas" && arr.length) renderBulkBar(arr.length);
     if (!arr.length) {
-      listEl.innerHTML = '<div class="empty">' +
+      listEl.insertAdjacentHTML("beforeend", '<div class="empty">' +
         '<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>' +
         (filter === "realizadas"
           ? '<h3>Aún no has terminado tareas</h3><p>Cuando marques una como Terminada, aparecerá aquí.</p>'
-          : '<h3>Sin tareas aquí</h3><p>Crea una nueva con el botón de arriba.</p>') + '</div>';
+          : filter === "hoy"
+            ? '<h3>Nada urgente</h3><p>No tienes entregas atrasadas ni en los próximos 7 días.</p>'
+            : '<h3>Sin tareas aquí</h3><p>Crea una nueva con el botón de arriba.</p>') + '</div>');
       return;
     }
     arr.forEach(function (t) { listEl.appendChild(cardEl(t)); });
+  }
+
+  // Contadores en las pestañas
+  function renderTabCounts() {
+    var today = todayStr(), lim = dateStrPlus(7);
+    var counts = {
+      hoy: tasks.filter(function (t) { return !t.done && t.due && t.due <= lim; }).length,
+      todas: tasks.filter(function (t) { return !t.done; }).length,
+      universidad: tasks.filter(function (t) { return !t.done && t.cat === "universidad"; }).length,
+      trabajo: tasks.filter(function (t) { return !t.done && t.cat === "trabajo"; }).length,
+      realizadas: tasks.filter(function (t) { return t.done; }).length
+    };
+    document.querySelectorAll(".tcount").forEach(function (s) {
+      var n = counts[s.dataset.c];
+      s.textContent = n ? String(n) : "";
+    });
+  }
+
+  // Panel "Hoy": clases del día + resumen rápido
+  function renderTodayPanel() {
+    var d = new Date().getDay();               // 0 domingo … 6 sábado
+    var idx = d === 0 ? -9 : d - 1;            // 0 = lunes en DIAS
+    var clases = horarioData.filter(function (c) { return c.dia === idx; })
+      .sort(function (a, b) { return (a.inicio || "").localeCompare(b.inicio || ""); });
+    var html = '<div class="today-panel"><div class="today-h">Clases de hoy</div>';
+    html += clases.length
+      ? '<div class="today-classes">' + clases.map(function (c) {
+          return '<div class="today-class" style="border-left-color:' + hzColor(c.materia) + '">' +
+            '<span class="tc-time">' + esc(c.inicio + " – " + c.fin) + '</span>' +
+            '<span class="tc-mat">' + esc(c.materia) + '</span>' +
+            (c.salon ? '<span class="tc-room">' + esc(c.salon) + '</span>' : "") +
+          '</div>';
+        }).join("") + '</div>'
+      : '<p class="today-none">Hoy no tienes clases en tu horario.</p>';
+    html += '</div>';
+    listEl.insertAdjacentHTML("beforeend", html);
+  }
+
+  function renderDayChip() {
+    listEl.insertAdjacentHTML("beforeend",
+      '<div class="day-chip">Mostrando solo el ' + esc(fmtDate(dayFilter)) +
+      ' <button id="clearDay">Quitar filtro</button></div>');
+    var b = document.getElementById("clearDay");
+    if (b) b.onclick = function () { dayFilter = ""; render(); };
+  }
+
+  // Calendario mensual con las entregas marcadas
+  var MESES_LARGOS = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+  function renderCalendario() {
+    if (!calCursor) { var n = new Date(); calCursor = new Date(n.getFullYear(), n.getMonth(), 1); }
+    var y = calCursor.getFullYear(), m = calCursor.getMonth();
+    var startDow = (new Date(y, m, 1).getDay() + 6) % 7;     // 0 = lunes
+    var daysInMonth = new Date(y, m + 1, 0).getDate();
+    var today = todayStr();
+    var byDate = {};
+    tasks.forEach(function (t) { if (t.due) (byDate[t.due] = byDate[t.due] || []).push(t); });
+
+    var html = '<div class="cal">' +
+      '<div class="cal-head">' +
+        '<button id="calPrev" title="Mes anterior"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>' +
+        '<div class="cal-title">' + MESES_LARGOS[m] + " " + y + '</div>' +
+        '<button id="calNext" title="Mes siguiente"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>' +
+        '<button id="calToday" class="cal-today-btn">Hoy</button>' +
+      '</div><div class="cal-grid">' +
+      ["Lu", "Ma", "Mi", "Ju", "Vi", "Sá", "Do"].map(function (d) { return '<div class="cal-dow">' + d + "</div>"; }).join("");
+    for (var i = 0; i < startDow; i++) html += '<div class="cal-cell blank"></div>';
+    for (var day = 1; day <= daysInMonth; day++) {
+      var iso = y + "-" + pad2(m + 1) + "-" + pad2(day);
+      var list = byDate[iso] || [];
+      var cls = "cal-cell" + (iso === today ? " today" : "") + (list.length ? " has" : "");
+      html += '<div class="' + cls + '" data-day="' + iso + '">' +
+        '<span class="cal-num">' + day + "</span>" +
+        (list.length ? '<span class="cal-dots">' + list.slice(0, 4).map(function (t) {
+          var col = t.done ? "var(--ok)" : (t.due < today ? "var(--danger)" : hzColor(t.materia || t.cat));
+          return '<i style="background:' + col + '" title="' + esc(t.title) + '"></i>';
+        }).join("") + (list.length > 4 ? "<b>+" + (list.length - 4) + "</b>" : "") + "</span>" : "") +
+        "</div>";
+    }
+    html += '</div><div class="cal-legend">' +
+      '<span><i style="background:var(--danger)"></i>Atrasada</span>' +
+      '<span><i style="background:var(--ok)"></i>Terminada</span>' +
+      '<span><i style="background:var(--accent)"></i>Pendiente</span>' +
+      '<span class="cal-hint">Toca un día para ver sus tareas</span></div></div>';
+    listEl.insertAdjacentHTML("beforeend", html);
+
+    document.getElementById("calPrev").onclick = function () { calCursor = new Date(y, m - 1, 1); render(); };
+    document.getElementById("calNext").onclick = function () { calCursor = new Date(y, m + 1, 1); render(); };
+    document.getElementById("calToday").onclick = function () { calCursor = null; render(); };
+    listEl.querySelectorAll("[data-day]").forEach(function (c) {
+      c.onclick = function () {
+        dayFilter = c.dataset.day;
+        setFilter("todas");
+      };
+    });
+
+    // Entregas del mes, en lista, debajo del calendario
+    var mes = Object.keys(byDate).filter(function (k) { return k.slice(0, 7) === y + "-" + pad2(m + 1); }).sort();
+    if (mes.length) {
+      var items = mes.map(function (k) {
+        return '<div class="cal-li"><span class="cal-li-d">' + fmtDate(k) + "</span>" +
+          byDate[k].map(function (t) {
+            return '<span class="cal-li-t' + (t.done ? " done" : "") + '">' + esc(t.title) + "</span>";
+          }).join("") + "</div>";
+      }).join("");
+      listEl.insertAdjacentHTML("beforeend", '<div class="cal-month-list"><div class="cal-ml-h">Entregas de ' + MESES_LARGOS[m] + '</div>' + items + "</div>");
+    }
+  }
+
+  function setFilter(cat) {
+    filter = cat;
+    document.querySelectorAll(".tab").forEach(function (b) { b.classList.toggle("active", b.dataset.cat === cat); });
+    clearTicks(); render();
+  }
+
+  function renderBulkBar(n) {
+    listEl.insertAdjacentHTML("beforeend",
+      '<div class="bulk-bar"><span>' + n + ' realizada' + (n > 1 ? "s" : "") + '</span>' +
+      '<button id="clearDone">Borrar todas las realizadas</button></div>');
+    var b = document.getElementById("clearDone");
+    if (b) b.onclick = function () {
+      if (!confirm("¿Borrar definitivamente todas las tareas realizadas? No se puede deshacer.")) return;
+      tasks = tasks.filter(function (t) { return !t.done; });
+      save(); clearTicks(); render();
+    };
   }
 
   function renderStats() {
@@ -824,7 +1043,38 @@ select { cursor: pointer; }
       stat(pending, overdue ? overdue + " atrasada" + (overdue > 1 ? "s" : "") : "Pendientes", overdue ? "danger" : "") +
       statBar(pct, done + " de " + total + " completadas") +
       stat(enProg, "En progreso");
+    renderByMateria();
   }
+  // Avance por materia (y por categoría de trabajo)
+  var byMateriaOpen = false;
+  function renderByMateria() {
+    var panel = document.getElementById("byMateriaPanel");
+    if (!panel) return;
+    panel.hidden = !byMateriaOpen;
+    if (!byMateriaOpen) return;
+    var grupos = {};
+    tasks.forEach(function (t) {
+      var k = t.materia ? t.materia : (t.cat === "trabajo" ? "Trabajo" : "Sin materia");
+      grupos[k] = grupos[k] || { total: 0, done: 0, pend: 0, atras: 0 };
+      grupos[k].total++;
+      if (t.done) grupos[k].done++; else {
+        grupos[k].pend++;
+        if (t.due && t.due < todayStr()) grupos[k].atras++;
+      }
+    });
+    var keys = Object.keys(grupos).sort(function (a, b) { return grupos[b].total - grupos[a].total; });
+    if (!keys.length) { panel.innerHTML = '<div class="bym"><p class="today-none">Aún no tienes tareas.</p></div>'; return; }
+    panel.innerHTML = '<div class="bym">' + keys.map(function (k) {
+      var g = grupos[k], pct = g.total ? Math.round(g.done / g.total * 100) : 0;
+      return '<div class="bym-row">' +
+        '<div class="bym-top"><span class="bym-name" style="border-color:' + hzColor(k) + '">' + esc(k) + '</span>' +
+        '<span class="bym-nums">' + g.done + "/" + g.total + " · " + pct + '%' +
+        (g.atras ? ' <b>' + g.atras + ' atrasada' + (g.atras > 1 ? "s" : "") + '</b>' : "") + '</span></div>' +
+        '<div class="bym-bar"><i style="width:' + pct + '%;background:' + hzColor(k) + '"></i></div>' +
+      '</div>';
+    }).join("") + "</div>";
+  }
+
   function stat(num, lbl, cls) {
     return '<div class="stat"><div class="num"' + (cls === "danger" ? ' style="color:var(--danger)"' : "") + '>' + num + '</div><div class="lbl">' + esc(lbl) + '</div></div>';
   }
@@ -900,12 +1150,14 @@ select { cursor: pointer; }
           }).join("") +
           '<div class="addsub"><input data-noteinput placeholder="Escribe una nota..."><button data-noteadd>Agregar nota</button></div>' +
         '</div>' +
-        (t.due ? '<div class="meta">' +
-          '<span class="m ' + dueClass(t) + '"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>' + esc(dueLabel(t)) + '</span>' +
+        ((t.due || t.link) ? '<div class="meta">' +
+          (t.due ? '<span class="m ' + dueClass(t) + '"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>' + esc(dueLabel(t)) + '</span>' : "") +
+          (t.link ? '<a class="m mlink" href="' + esc(t.link) + '" target="_blank" rel="noopener"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>Abrir enlace</a>' : "") +
         '</div>' : "") +
       '</div>' +
       '<div class="card-actions">' +
         '<button data-edit title="Editar"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>' +
+        '<button data-dup title="Duplicar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>' +
         '<button class="del" data-del title="Eliminar"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>' +
       '</div>';
 
@@ -913,6 +1165,7 @@ select { cursor: pointer; }
     el.querySelector(".check").onclick = function () { toggleDone(t.id); };
     el.querySelector("[data-edit]").onclick = function () { openModal(t.id); };
     el.querySelector("[data-del]").onclick = function () { removeTask(t.id); };
+    el.querySelector("[data-dup]").onclick = function () { duplicateTask(t.id); };
     el.querySelectorAll("[data-status]").forEach(function (b) {
       b.onclick = function () { setStatus(t.id, b.dataset.status); };
     });
@@ -979,6 +1232,18 @@ select { cursor: pointer; }
     var t = byId(id); if (!t) return;
     if (!confirm('¿Eliminar "' + t.title + '"?')) return;
     tasks = tasks.filter(function (x) { return x.id !== id; });
+    save(); clearTicks(); render();
+  }
+  function duplicateTask(id) {
+    var t = byId(id); if (!t) return;
+    var copia = JSON.parse(JSON.stringify(t));
+    copia.id = uid();
+    copia.title = t.title + " (copia)";
+    copia.done = false; copia.status = "sin_revisar"; copia.progress = 0;
+    delete copia.doneAt;
+    copia.created = Date.now();
+    (copia.subtasks || []).forEach(function (s) { s.done = false; });
+    tasks.push(copia);
     save(); clearTicks(); render();
   }
   function addSub(id, text) {
@@ -1078,6 +1343,7 @@ select { cursor: pointer; }
       form.fCat.value = t.cat;
       form.fPrio.value = t.prio;
       form.fDue.value = t.due || "";
+      form.fLink.value = t.link || "";
       form.fMateria.value = t.materia || "";
       form.fPeople.value = (t.people || []).join(", ");
     } else {
@@ -1098,17 +1364,18 @@ select { cursor: pointer; }
       cat: form.fCat.value,
       prio: form.fPrio.value,
       due: form.fDue.value || "",
+      link: form.fLink.value.trim(),
       materia: form.fMateria.value.trim(),
       people: form.fPeople.value.split(",").map(function (p) { return p.trim(); }).filter(Boolean)
     };
     if (!data.title) return;
     if (editingId) {
       var t = byId(editingId);
-      t.title = data.title; t.desc = data.desc; t.cat = data.cat; t.prio = data.prio; t.due = data.due; t.materia = data.materia; t.people = data.people;
+      t.title = data.title; t.desc = data.desc; t.cat = data.cat; t.prio = data.prio; t.due = data.due; t.link = data.link; t.materia = data.materia; t.people = data.people;
     } else {
       tasks.push({
         id: uid(), title: data.title, desc: data.desc, cat: data.cat, prio: data.prio,
-        due: data.due, materia: data.materia, people: data.people, done: false, status: "sin_revisar", progress: 0,
+        due: data.due, link: data.link, materia: data.materia, people: data.people, done: false, status: "sin_revisar", progress: 0,
         subtasks: pendingSubtasks, created: Date.now()
       });
     }
@@ -1130,11 +1397,25 @@ select { cursor: pointer; }
     document.querySelectorAll(".tab").forEach(function (b) { b.classList.remove("active"); });
     btn.classList.add("active");
     filter = btn.dataset.cat;
+    dayFilter = "";
     clearTicks(); render();
   };
   document.getElementById("search").oninput = function (e) { query = e.target.value.toLowerCase().trim(); clearTicks(); render(); };
   document.getElementById("sort").onchange = function (e) { sortBy = e.target.value; clearTicks(); render(); };
   document.getElementById("materiaFilter").onchange = function (e) { materiaFilterVal = e.target.value; clearTicks(); render(); };
+  document.getElementById("byMateriaToggle").onclick = function () {
+    byMateriaOpen = !byMateriaOpen;
+    this.textContent = byMateriaOpen ? "Ocultar avance por materia" : "Ver avance por materia";
+    renderByMateria();
+  };
+
+  // Atajos de teclado: N = nueva tarea, / = buscar
+  document.addEventListener("keydown", function (e) {
+    var tag = (e.target && e.target.tagName) || "";
+    if (/INPUT|TEXTAREA|SELECT/.test(tag) || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.key === "n" || e.key === "N") { e.preventDefault(); openModal(null); }
+    else if (e.key === "/") { e.preventDefault(); var s = document.getElementById("search"); if (s) s.focus(); }
+  });
 
   // ---- Respaldo (descargar / restaurar copia) ----
   document.getElementById("exportBtn").onclick = function () {
@@ -1658,6 +1939,8 @@ select { cursor: pointer; }
   var materiasBody = document.getElementById("materiasBody");
   var editMateriasLink = document.getElementById("editMateriasLink");
   if (editMateriasLink) editMateriasLink.onclick = openMaterias;
+  var settingsBtn = document.getElementById("settingsBtn");
+  if (settingsBtn) settingsBtn.onclick = openMaterias;
   document.getElementById("closeMaterias").onclick = function () { materiasOverlay.classList.remove("open"); };
   materiasOverlay.onclick = function (e) { if (e.target === materiasOverlay) materiasOverlay.classList.remove("open"); };
 
@@ -1668,7 +1951,14 @@ select { cursor: pointer; }
     }).join("");
     materiasBody.innerHTML =
       (MATERIAS.length ? '<div class="mlist">' + rows + '</div>' : '<p class="horario-empty">No tienes materias. Agrega la primera.</p>') +
-      '<div class="addsub" style="margin-top:14px"><input id="newMateria" placeholder="Nueva materia..."><button id="addMateriaBtn">Agregar</button></div>';
+      '<div class="addsub" style="margin-top:14px"><input id="newMateria" placeholder="Nueva materia..."><button id="addMateriaBtn">Agregar</button></div>' +
+      '<div class="hz-img-section"><div class="hz-sub">Recordatorios</div>' +
+        '<div class="remind-row">Avisarme con ' +
+          '<select id="remindSel">' + [0, 1, 2, 3, 5, 7].map(function (n) {
+            return '<option value="' + n + '"' + (n === remindDays ? " selected" : "") + '>' + (n === 0 ? "el mismo día" : n === 1 ? "1 día" : n + " días") + "</option>";
+          }).join("") + "</select> de antelación</div>" +
+        '<p class="today-none" style="margin-top:8px">Se aplica al aviso de arriba y a las notificaciones del navegador.</p>' +
+      "</div>";
     materiasBody.querySelectorAll("[data-mrem]").forEach(function (b) {
       b.onclick = function () {
         MATERIAS.splice(parseInt(b.dataset.mrem, 10), 1);
@@ -1684,6 +1974,12 @@ select { cursor: pointer; }
     }
     ab.onclick = add;
     ni.onkeydown = function (e) { if (e.key === "Enter") { e.preventDefault(); add(); } };
+    var rs = document.getElementById("remindSel");
+    if (rs) rs.onchange = function () {
+      remindDays = parseInt(rs.value, 10) || 0;
+      try { localStorage.setItem(REMIND_KEY, String(remindDays)); } catch (e) {}
+      render();
+    };
   }
 
   // ---- Horario ----
@@ -1838,7 +2134,7 @@ select { cursor: pointer; }
   // Solo funciona con la app abierta y una vez al día por tarea.
   function checkReminders(force) {
     if (!("Notification" in window) || Notification.permission !== "granted") return;
-    var today = todayStr(), plus2 = dateStrPlus(2);
+    var today = todayStr(), plus2 = dateStrPlus(remindDays);
     var seen = {};
     try { seen = JSON.parse(localStorage.getItem(NOTIF_KEY) || "{}"); } catch (e) {}
     tasks.forEach(function (t) {
