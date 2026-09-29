@@ -190,6 +190,7 @@ select { cursor: pointer; }
 .chip.media { background: var(--work-soft); color: var(--work); }
 .chip.baja { background: var(--surface-2); color: var(--text-soft); }
 .chip.materia { background: var(--accent-soft); color: var(--accent); }
+.chip.repeat { background: var(--ok-soft); color: var(--ok); }
 .desc { font-size: 13px; color: var(--text-soft); margin-top: 6px; white-space: pre-wrap; word-break: break-word; }
 .meta { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 12px; font-size: 12px; color: var(--text-soft); }
 .meta .m { display: inline-flex; align-items: center; gap: 5px; }
@@ -349,6 +350,15 @@ select { cursor: pointer; }
 }
 .alert-bar.danger { background: var(--danger-soft); color: var(--danger); }
 .alert-bar svg { flex-shrink: 0; }
+
+/* Vista compacta */
+body.compacto .card .desc,
+body.compacto .card .status-pills,
+body.compacto .card .checklist,
+body.compacto .card .notes { display: none; }
+body.compacto .card { padding: 12px 14px; }
+body.compacto .status-wrap { margin-top: 8px; }
+#compactBtn.on { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
 
 /* Avance por materia */
 #byMateriaToggle { margin: -6px 0 14px; }
@@ -522,6 +532,9 @@ select { cursor: pointer; }
       <option value="progress">Por progreso</option>
       <option value="materia">Por materia</option>
     </select>
+    <button class="icon-btn" id="compactBtn" title="Vista compacta" aria-label="Vista compacta">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </button>
     <button class="btn" id="addBtn">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
       Nueva tarea
@@ -637,6 +650,15 @@ select { cursor: pointer; }
         <div class="field">
           <label for="fDue">Fecha límite (opcional)</label>
           <input id="fDue" type="date">
+        </div>
+        <div class="field">
+          <label for="fRepeat">Repetir</label>
+          <select id="fRepeat">
+            <option value="">No se repite</option>
+            <option value="semanal">Cada semana</option>
+            <option value="quincenal">Cada 2 semanas</option>
+            <option value="mensual">Cada mes</option>
+          </select>
         </div>
         <div class="field">
           <label for="fLink">Enlace (opcional)</label>
@@ -1101,6 +1123,7 @@ select { cursor: pointer; }
           '<span class="chip ' + t.cat + '">' + (t.cat === "universidad" ? "Universidad" : "Trabajo") + '</span>' +
           '<span class="chip ' + t.prio + '">' + cap(t.prio) + '</span>' +
           (t.materia ? '<span class="chip materia">' + esc(t.materia) + '</span>' : '') +
+          (t.repeat ? '<span class="chip repeat">Repite: ' + esc(t.repeat) + '</span>' : '') +
           (t.people && t.people.length ? '<span class="assignees">' +
             t.people.slice(0, 4).map(function (p) { return '<span class="avatar" title="' + esc(p) + '">' + esc(initials(p)) + '</span>'; }).join("") +
             (t.people.length > 4 ? '<span class="avatar">+' + (t.people.length - 4) + '</span>' : '') +
@@ -1120,7 +1143,8 @@ select { cursor: pointer; }
         '</div>' +
         '<div class="checklist">' +
           (subs.length ? '<div class="checklist-head">Pasos <span>' + sdone + "/" + subs.length + " hechos</span>" +
-            '<div class="checklist-mini"><i style="width:' + Math.round(sdone / subs.length * 100) + '%"></i></div></div>' : "") +
+            '<div class="checklist-mini"><i style="width:' + Math.round(sdone / subs.length * 100) + '%"></i></div>' +
+            '<button class="link-btn" data-allsubs style="margin:0">' + (sdone === subs.length ? "Desmarcar todos" : "Marcar todos") + '</button></div>' : "") +
           subs.map(function (s, i) {
             return '<div class="sub-item">' +
               '<div class="sub ' + (s.done ? "done" : "") + '">' +
@@ -1181,6 +1205,8 @@ select { cursor: pointer; }
     el.querySelectorAll("[data-stext]").forEach(function (inp) {
       inp.onchange = function () { editSub(t.id, parseInt(inp.dataset.stext, 10), inp.value); };
     });
+    var allBtn = el.querySelector("[data-allsubs]");
+    if (allBtn) allBtn.onclick = function () { toggleAllSubs(t.id); };
     el.querySelectorAll("[data-sup]").forEach(function (b) {
       b.onclick = function () { moveSub(t.id, parseInt(b.dataset.sup, 10), -1); };
     });
@@ -1211,7 +1237,7 @@ select { cursor: pointer; }
   function toggleDone(id) {
     var t = byId(id); if (!t) return;
     t.done = !t.done;
-    if (t.done) { t.status = "terminada"; t.progress = 100; t.doneAt = Date.now(); }
+    if (t.done) { t.status = "terminada"; t.progress = 100; t.doneAt = Date.now(); spawnRepeat(t); }
     else {
       if (!t.status || t.status === "terminada") t.status = "iniciada";
       var st = statusByKey(t.status);
@@ -1222,10 +1248,11 @@ select { cursor: pointer; }
   function setStatus(id, key) {
     var t = byId(id); if (!t) return;
     var st = statusByKey(key); if (!st) return;
+    var wasDone = t.done;
     t.status = key;
     t.progress = st.pct;
     t.done = (key === "terminada");
-    if (t.done) t.doneAt = Date.now();
+    if (t.done) { t.doneAt = Date.now(); if (!wasDone) spawnRepeat(t); }
     save(); clearTicks(); render();
   }
   function removeTask(id) {
@@ -1234,6 +1261,26 @@ select { cursor: pointer; }
     tasks = tasks.filter(function (x) { return x.id !== id; });
     save(); clearTicks(); render();
   }
+  // Tareas que se repiten: al terminarlas se crea la siguiente
+  function advanceDue(iso, repeat) {
+    var p = iso.split("-"), d = new Date(+p[0], +p[1] - 1, +p[2]);
+    if (repeat === "semanal") d.setDate(d.getDate() + 7);
+    else if (repeat === "quincenal") d.setDate(d.getDate() + 14);
+    else if (repeat === "mensual") d.setMonth(d.getMonth() + 1);
+    else return iso;
+    return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+  }
+  function spawnRepeat(t) {
+    if (!t.repeat || !t.due) return;
+    var n = JSON.parse(JSON.stringify(t));
+    n.id = uid(); n.done = false; n.status = "sin_revisar"; n.progress = 0;
+    delete n.doneAt; n.created = Date.now();
+    n.due = advanceDue(t.due, t.repeat);
+    n.notes = [];
+    (n.subtasks || []).forEach(function (s) { s.done = false; s.note = ""; });
+    tasks.push(n);
+  }
+
   function duplicateTask(id) {
     var t = byId(id); if (!t) return;
     var copia = JSON.parse(JSON.stringify(t));
@@ -1260,6 +1307,12 @@ select { cursor: pointer; }
   function removeSub(id, i) {
     var t = byId(id); if (!t || !t.subtasks) return;
     t.subtasks.splice(i, 1);
+    save(); clearTicks(); render();
+  }
+  function toggleAllSubs(id) {
+    var t = byId(id); if (!t || !t.subtasks || !t.subtasks.length) return;
+    var todosHechos = t.subtasks.every(function (s) { return s.done; });
+    t.subtasks.forEach(function (s) { s.done = !todosHechos; });
     save(); clearTicks(); render();
   }
   function editSub(id, i, text) {
@@ -1344,6 +1397,7 @@ select { cursor: pointer; }
       form.fPrio.value = t.prio;
       form.fDue.value = t.due || "";
       form.fLink.value = t.link || "";
+      form.fRepeat.value = t.repeat || "";
       form.fMateria.value = t.materia || "";
       form.fPeople.value = (t.people || []).join(", ");
     } else {
@@ -1365,17 +1419,18 @@ select { cursor: pointer; }
       prio: form.fPrio.value,
       due: form.fDue.value || "",
       link: form.fLink.value.trim(),
+      repeat: form.fRepeat.value,
       materia: form.fMateria.value.trim(),
       people: form.fPeople.value.split(",").map(function (p) { return p.trim(); }).filter(Boolean)
     };
     if (!data.title) return;
     if (editingId) {
       var t = byId(editingId);
-      t.title = data.title; t.desc = data.desc; t.cat = data.cat; t.prio = data.prio; t.due = data.due; t.link = data.link; t.materia = data.materia; t.people = data.people;
+      t.title = data.title; t.desc = data.desc; t.cat = data.cat; t.prio = data.prio; t.due = data.due; t.link = data.link; t.repeat = data.repeat; t.materia = data.materia; t.people = data.people;
     } else {
       tasks.push({
         id: uid(), title: data.title, desc: data.desc, cat: data.cat, prio: data.prio,
-        due: data.due, link: data.link, materia: data.materia, people: data.people, done: false, status: "sin_revisar", progress: 0,
+        due: data.due, link: data.link, repeat: data.repeat, materia: data.materia, people: data.people, done: false, status: "sin_revisar", progress: 0,
         subtasks: pendingSubtasks, created: Date.now()
       });
     }
@@ -1403,6 +1458,22 @@ select { cursor: pointer; }
   document.getElementById("search").oninput = function (e) { query = e.target.value.toLowerCase().trim(); clearTicks(); render(); };
   document.getElementById("sort").onchange = function (e) { sortBy = e.target.value; clearTicks(); render(); };
   document.getElementById("materiaFilter").onchange = function (e) { materiaFilterVal = e.target.value; clearTicks(); render(); };
+  // Vista compacta (se recuerda)
+  var compactBtn = document.getElementById("compactBtn");
+  var COMPACT_KEY = "organizador_compacto";
+  function applyCompact() {
+    document.body.classList.toggle("compacto", compacto);
+    if (compactBtn) compactBtn.classList.toggle("on", compacto);
+  }
+  var compacto = false;
+  try { compacto = localStorage.getItem(COMPACT_KEY) === "1"; } catch (e) {}
+  applyCompact();
+  if (compactBtn) compactBtn.onclick = function () {
+    compacto = !compacto;
+    try { localStorage.setItem(COMPACT_KEY, compacto ? "1" : "0"); } catch (e) {}
+    applyCompact();
+  };
+
   document.getElementById("byMateriaToggle").onclick = function () {
     byMateriaOpen = !byMateriaOpen;
     this.textContent = byMateriaOpen ? "Ocultar avance por materia" : "Ver avance por materia";

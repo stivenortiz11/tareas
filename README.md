@@ -20,6 +20,8 @@ Abre `index.html` con doble clic y listo. También puedes subirla a Netlify (ver
 - Ver el **avance por materia**: cuántas llevas hechas, el porcentaje y cuántas están atrasadas.
 - Guardar un **enlace** en cada tarea (aula virtual, ticket) y abrirlo desde la tarjeta.
 - **Duplicar** una tarea, y borrar de una vez todas las realizadas.
+- Tareas que se repiten (cada semana, cada 2 semanas o cada mes): al terminarlas se crea sola la siguiente.
+- Vista compacta para ver muchas tareas de un vistazo, y "Marcar todos" los pasos de golpe.
 - Contadores en las pestañas y atajos de teclado (N para nueva tarea, / para buscar).
 - Elegir con cuánta antelación quieres el aviso (mismo día, 1, 2, 3, 5 o 7 días).
 - Buscar, filtrar por materia y ordenar por fecha, prioridad, progreso o materia. Tema claro y oscuro.
