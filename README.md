@@ -16,6 +16,13 @@ Abre `index.html` con doble clic y listo. También puedes subirla a Netlify (ver
 - Cronometrar el tiempo por tarea con play y pausa. Solo corre un cronómetro a la vez para que el total sea real.
 - Ver un aviso arriba cuando hay tareas atrasadas o para hoy.
 - Crear una tarea desde un pantallazo: subes la captura, se lee el texto y se rellenan los campos. Luego revisas y ajustas.
+- **Orden sugerido** (el que trae por defecto): calcula qué conviene hacer primero combinando la fecha límite, la prioridad, lo que ya llevas empezado y el tiempo estimado.
+- Las tareas se agrupan en bloques: **Atrasadas, Para hoy, Esta semana, Más adelante y Sin fecha**.
+- **Plan del día** en la vista Hoy: las 3 tareas por las que conviene empezar, con el motivo de cada una y cuántas horas suman frente a las horas de clase que tienes ese día.
+- **Aviso de días congestionados**: te marca cuando se te juntan 3 o más entregas el mismo día en las próximas 2 semanas.
+- **Sugerir pasos**: si una tarea no tiene checklist, propone los pasos típicos según de qué trate (taller, informe, examen, exposición, ticket de soporte, etc.).
+- **Tiempo estimado** por tarea, usado para planificar y priorizar.
+- **Aviso de tareas estancadas**: marca las que empezaste pero llevan días sin movimiento.
 - Vista **Hoy**: tus clases del día según el horario, más lo atrasado y lo que vence en los próximos 7 días.
 - Vista **Calendario**: mes completo con las entregas marcadas por color (atrasada, pendiente, terminada). Tocas un día y ves sus tareas.
 - Ver el **avance por materia**: cuántas llevas hechas, el porcentaje y cuántas están atrasadas.

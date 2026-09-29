@@ -191,11 +191,13 @@ select { cursor: pointer; }
 .chip.baja { background: var(--surface-2); color: var(--text-soft); }
 .chip.materia { background: var(--accent-soft); color: var(--accent); }
 .chip.repeat { background: var(--ok-soft); color: var(--ok); }
+.chip.horas { background: var(--surface-2); color: var(--text-soft); }
 .desc { font-size: 13px; color: var(--text-soft); margin-top: 6px; white-space: pre-wrap; word-break: break-word; }
 .meta { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 12px; font-size: 12px; color: var(--text-soft); }
 .meta .m { display: inline-flex; align-items: center; gap: 5px; }
 .meta .m.overdue { color: var(--danger); font-weight: 600; }
 .meta .m.soon { color: var(--work); font-weight: 600; }
+.meta .m.stale { color: var(--work); font-weight: 600; }
 .meta .mlink { color: var(--accent); text-decoration: none; font-weight: 600; }
 .meta .mlink:hover { text-decoration: underline; }
 .progress-wrap { margin-top: 12px; }
@@ -358,6 +360,14 @@ select { cursor: pointer; }
 .alert-bar.danger { background: var(--danger-soft); color: var(--danger); }
 .alert-bar svg { flex-shrink: 0; }
 
+/* Bloques por urgencia */
+.group-h { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-soft); margin: 6px 2px -2px; }
+.group-h i { font-style: normal; background: var(--surface-2); color: var(--text-soft); border-radius: 99px; padding: 1px 8px; font-size: 11px; }
+.group-h.danger { color: var(--danger); }
+.group-h.danger i { background: var(--danger-soft); color: var(--danger); }
+.group-h.work { color: var(--work); }
+.group-h.work i { background: var(--work-soft); color: var(--work); }
+
 /* Vista compacta */
 body.compacto .card .desc,
 body.compacto .card .status-pills,
@@ -386,6 +396,16 @@ body.compacto .status-wrap { margin-top: 8px; }
 .tc-mat { font-size: 13px; font-weight: 600; }
 .tc-room { font-size: 11.5px; color: var(--text-soft); }
 .today-none { font-size: 13px; color: var(--text-soft); margin: 0; }
+.plan { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow); margin-top: 12px; }
+.plan.alerta { border-color: var(--work); background: var(--work-soft); }
+.plan.alerta .today-h { color: var(--work); }
+.plan-list { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 9px; }
+.plan-list li { font-size: 13px; }
+.plan-t { font-weight: 600; display: block; }
+.plan-why { font-size: 11.5px; color: var(--text-soft); }
+.plan-h2 { font-size: 11.5px; color: var(--text-soft); margin-left: 8px; background: var(--surface-2); border-radius: 99px; padding: 1px 8px; }
+.plan-sum { font-size: 12px; color: var(--text-soft); margin: 10px 0 0; }
+.plan-dia { font-size: 12.5px; color: var(--work); padding: 3px 0; }
 
 /* Chip de día y acciones masivas */
 .day-chip, .bulk-bar { display: flex; align-items: center; gap: 10px; justify-content: space-between; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 9px 14px; font-size: 13px; color: var(--text-soft); }
@@ -533,6 +553,7 @@ body.compacto .status-wrap { margin-top: 8px; }
     </div>
     <select id="materiaFilter" style="width:auto"><option value="todas">Todas las materias</option></select>
     <select id="sort" style="width:auto">
+      <option value="sugerido">Orden sugerido</option>
       <option value="created">Recientes</option>
       <option value="due">Por fecha</option>
       <option value="priority">Por prioridad</option>
@@ -659,13 +680,21 @@ body.compacto .status-wrap { margin-top: 8px; }
           <input id="fDue" type="date">
         </div>
         <div class="field">
-          <label for="fRepeat">Repetir</label>
-          <select id="fRepeat">
-            <option value="">No se repite</option>
-            <option value="semanal">Cada semana</option>
-            <option value="quincenal">Cada 2 semanas</option>
-            <option value="mensual">Cada mes</option>
-          </select>
+          <div class="row2">
+            <div>
+              <label for="fRepeat">Repetir</label>
+              <select id="fRepeat">
+                <option value="">No se repite</option>
+                <option value="semanal">Cada semana</option>
+                <option value="quincenal">Cada 2 semanas</option>
+                <option value="mensual">Cada mes</option>
+              </select>
+            </div>
+            <div>
+              <label for="fHoras">Tiempo estimado (horas)</label>
+              <input id="fHoras" type="number" min="0" step="0.5" placeholder="Ej: 2">
+            </div>
+          </div>
         </div>
         <div class="field">
           <label for="fLink">Enlace (opcional)</label>
@@ -733,7 +762,7 @@ body.compacto .status-wrap { margin-top: 8px; }
   var dayFilter = "";       // día concreto elegido en el calendario (YYYY-MM-DD)
   var calCursor = null;     // mes que muestra el calendario
   var query = "";
-  var sortBy = "created";
+  var sortBy = "sugerido";
   var editingId = null;
   var ticking = {}; // id -> intervalId for live display
   var pendingSubtasks = []; // pasos sugeridos por la IA al leer un pantallazo
@@ -848,6 +877,40 @@ body.compacto .status-wrap { margin-top: 8px; }
     return statusByKey(key) || STATUSES[0];
   }
   function taskProgress(t) { return statusFor(t).pct; }
+
+  // Puntaje de urgencia: combina fecha límite, prioridad, avance y esfuerzo
+  // para responder "¿qué me conviene hacer primero?".
+  function urgencyScore(t) {
+    var s = 0;
+    if (t.due) {
+      var d = daysUntil(t.due);
+      if (d < 0) s += 100 + Math.min(-d, 30) * 2;      // atrasada: manda
+      else if (d === 0) s += 90;                        // vence hoy
+      else if (d === 1) s += 76;
+      else if (d <= 3) s += 66 - d * 3;
+      else if (d <= 7) s += 46 - d;
+      else s += Math.max(4, 26 - d);
+    } else {
+      s += 8;                                           // sin fecha: al final
+    }
+    s += t.prio === "alta" ? 25 : t.prio === "media" ? 12 : 0;
+    var k = statusFor(t).key;
+    if (k === "media" || k === "casi") s += 9;          // conviene cerrar lo empezado
+    else if (k === "iniciada" || k === "revisado") s += 4;
+    if (t.horas) s += Math.min(+t.horas || 0, 10);      // lo largo, antes
+    return Math.round(s);
+  }
+
+  // Motivo legible del puesto que ocupa una tarea
+  function urgencyReason(t) {
+    if (!t.due) return t.prio === "alta" ? "Prioridad alta, sin fecha" : "Sin fecha límite";
+    var d = daysUntil(t.due);
+    if (d < 0) return "Atrasada " + (-d) + (d === -1 ? " día" : " días");
+    if (d === 0) return "Vence hoy";
+    if (d === 1) return "Vence mañana";
+    if (d <= 7) return "Vence en " + d + " días";
+    return "Vence en " + d + " días";
+  }
   function initials(name) {
     var parts = name.trim().split(/\s+/);
     if (parts.length === 1) return parts[0].slice(0, 2);
@@ -880,6 +943,7 @@ body.compacto .status-wrap { margin-top: 8px; }
     arr.sort(function (a, b) {
       if (showDone) return (b.doneAt || 0) - (a.doneAt || 0);       // finalizadas: las más recientes primero
       if (isHoy) return (a.due || "").localeCompare(b.due || "");   // hoy: por fecha, lo más urgente primero
+      if (sortBy === "sugerido") return urgencyScore(b) - urgencyScore(a);
       if (sortBy === "due") {
         if (!a.due) return 1; if (!b.due) return -1;
         return a.due.localeCompare(b.due);
@@ -935,7 +999,32 @@ body.compacto .status-wrap { margin-top: 8px; }
             : '<h3>Sin tareas aquí</h3><p>Crea una nueva con el botón de arriba.</p>') + '</div>');
       return;
     }
-    arr.forEach(function (t) { listEl.appendChild(cardEl(t)); });
+    if (sortBy === "sugerido" && filter !== "realizadas") renderAgrupado(arr);
+    else arr.forEach(function (t) { listEl.appendChild(cardEl(t)); });
+  }
+
+  // Agrupa las tareas en bloques por urgencia, para saber por dónde empezar
+  function renderAgrupado(arr) {
+    var g = { atrasadas: [], hoy: [], semana: [], despues: [], sinfecha: [] };
+    arr.forEach(function (t) {
+      if (!t.due) { g.sinfecha.push(t); return; }
+      var d = daysUntil(t.due);
+      if (d < 0) g.atrasadas.push(t);
+      else if (d === 0) g.hoy.push(t);
+      else if (d <= 7) g.semana.push(t);
+      else g.despues.push(t);
+    });
+    [["atrasadas", "Atrasadas", "danger"], ["hoy", "Para hoy", "work"],
+     ["semana", "Esta semana", ""], ["despues", "Más adelante", ""], ["sinfecha", "Sin fecha", ""]]
+    .forEach(function (d) {
+      var lista = g[d[0]];
+      if (!lista.length) return;
+      var head = document.createElement("div");
+      head.className = "group-h" + (d[2] ? " " + d[2] : "");
+      head.innerHTML = "<span>" + d[1] + "</span><i>" + lista.length + "</i>";
+      listEl.appendChild(head);
+      lista.forEach(function (t) { listEl.appendChild(cardEl(t)); });
+    });
   }
 
   // Contadores en las pestañas
@@ -971,6 +1060,46 @@ body.compacto .status-wrap { margin-top: 8px; }
         }).join("") + '</div>'
       : '<p class="today-none">Hoy no tienes clases en tu horario.</p>';
     html += '</div>';
+
+    // Plan: por dónde empezar hoy, según urgencia
+    var pendientes = tasks.filter(function (t) { return !t.done; })
+      .sort(function (a, b) { return urgencyScore(b) - urgencyScore(a); });
+    var top = pendientes.slice(0, 3);
+    if (top.length) {
+      var horasTop = top.reduce(function (a, t) { return a + (+t.horas || 0); }, 0);
+      var horasClase = clases.reduce(function (a, c) {
+        if (!c.inicio || !c.fin) return a;
+        var i = c.inicio.split(":"), fz = c.fin.split(":");
+        return a + ((+fz[0] * 60 + +fz[1]) - (+i[0] * 60 + +i[1])) / 60;
+      }, 0);
+      html += '<div class="plan"><div class="today-h">Por dónde empezar</div><ol class="plan-list">' +
+        top.map(function (t) {
+          return '<li><span class="plan-t">' + esc(t.title) + '</span>' +
+            '<span class="plan-why">' + esc(urgencyReason(t)) +
+            (t.materia ? " · " + esc(t.materia) : (t.cat === "trabajo" ? " · Trabajo" : "")) + '</span>' +
+            (t.horas ? '<span class="plan-h2">≈ ' + esc(fmtHoras(t.horas)) + "</span>" : "") + "</li>";
+        }).join("") + "</ol>" +
+        '<p class="plan-sum">' +
+          (horasTop ? "Estas 3 suman unas " + fmtHoras(horasTop) + ". " : "") +
+          (horasClase ? "Hoy tienes " + fmtHoras(horasClase) + " de clase." : "Hoy no tienes clase, buen día para adelantar.") +
+        "</p></div>";
+    }
+
+    // Aviso de días congestionados en las próximas 2 semanas
+    var porDia = {}, hoyIso = todayStr(), tope = dateStrPlus(14);
+    tasks.forEach(function (t) {
+      if (t.done || !t.due) return;
+      if (t.due < hoyIso || t.due > tope) return;
+      (porDia[t.due] = porDia[t.due] || []).push(t);
+    });
+    var cargados = Object.keys(porDia).filter(function (k) { return porDia[k].length >= 3; }).sort();
+    if (cargados.length) {
+      html += '<div class="plan alerta"><div class="today-h">Ojo con estos días</div>' +
+        cargados.map(function (k) {
+          return '<div class="plan-dia"><b>' + esc(fmtDate(k)) + "</b> · " + porDia[k].length + " entregas el mismo día</div>";
+        }).join("") + "</div>";
+    }
+
     listEl.insertAdjacentHTML("beforeend", html);
   }
 
@@ -1137,6 +1266,7 @@ body.compacto .status-wrap { margin-top: 8px; }
           '<span class="chip ' + t.prio + '">' + cap(t.prio) + '</span>' +
           (t.materia ? '<span class="chip materia">' + esc(t.materia) + '</span>' : '') +
           (t.repeat ? '<span class="chip repeat">Repite: ' + esc(t.repeat) + '</span>' : '') +
+          (t.horas ? '<span class="chip horas">≈ ' + esc(fmtHoras(t.horas)) + '</span>' : '') +
           (t.people && t.people.length ? '<span class="assignees">' +
             t.people.slice(0, 4).map(function (p) { return '<span class="avatar" title="' + esc(p) + '">' + esc(initials(p)) + '</span>'; }).join("") +
             (t.people.length > 4 ? '<span class="avatar">+' + (t.people.length - 4) + '</span>' : '') +
@@ -1175,6 +1305,7 @@ body.compacto .status-wrap { margin-top: 8px; }
             '</div>';
           }).join("") +
           '<div class="addsub"><input data-subinput placeholder="Agregar paso..."><button data-subadd>Añadir paso</button></div>' +
+          (subs.length ? "" : '<button class="link-btn" data-sugerir style="margin-top:2px">Sugerir pasos para esta tarea</button>') +
         '</div>' +
         '<div class="notes">' +
           '<div class="notes-h">Notas' + (notasVis.length ? ' <span>' + notasVis.length + '</span>' : '') + '</div>' +
@@ -1201,7 +1332,8 @@ body.compacto .status-wrap { margin-top: 8px; }
             (verOcultas ? "Volver a esconder las guardadas" : "Ver " + notasOc.length + " nota" + (notasOc.length > 1 ? "s" : "") + " guardada" + (notasOc.length > 1 ? "s" : "")) + '</button>' : "") +
           '<div class="addsub"><input data-noteinput placeholder="Escribe una nota..."><button data-noteadd>Agregar nota</button></div>' +
         '</div>' +
-        ((t.due || t.link) ? '<div class="meta">' +
+        ((t.due || t.link || estancada(t)) ? '<div class="meta">' +
+          (estancada(t) ? '<span class="m stale"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>' + esc(estancada(t)) + '</span>' : "") +
           (t.due ? '<span class="m ' + dueClass(t) + '"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>' + esc(dueLabel(t)) + '</span>' : "") +
           (t.link ? '<a class="m mlink" href="' + esc(t.link) + '" target="_blank" rel="noopener"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>Abrir enlace</a>' : "") +
         '</div>' : "") +
@@ -1232,6 +1364,8 @@ body.compacto .status-wrap { margin-top: 8px; }
     el.querySelectorAll("[data-stext]").forEach(function (inp) {
       inp.onchange = function () { editSub(t.id, parseInt(inp.dataset.stext, 10), inp.value); };
     });
+    var sugBtn = el.querySelector("[data-sugerir]");
+    if (sugBtn) sugBtn.onclick = function () { aplicarPasosSugeridos(t.id); };
     var allBtn = el.querySelector("[data-allsubs]");
     if (allBtn) allBtn.onclick = function () { toggleAllSubs(t.id); };
     el.querySelectorAll("[data-sup]").forEach(function (b) {
@@ -1293,6 +1427,7 @@ body.compacto .status-wrap { margin-top: 8px; }
     if (estadoAnterior !== key && taskNotes(t).some(function (n) { return !n.oculta; })) pendingNoteChoice[id] = true;
     t.status = key;
     t.progress = st.pct;
+    t.updatedAt = Date.now();
     t.done = (key === "terminada");
     if (t.done) { t.doneAt = Date.now(); if (!wasDone) spawnRepeat(t); }
     save(); clearTicks(); render();
@@ -1340,11 +1475,13 @@ body.compacto .status-wrap { margin-top: 8px; }
     var t = byId(id); if (!t) return;
     if (!t.subtasks) t.subtasks = [];
     t.subtasks.push({ text: text, done: false });
+    t.updatedAt = Date.now();
     save(); clearTicks(); render();
   }
   function toggleSub(id, i) {
     var t = byId(id); if (!t || !t.subtasks[i]) return;
     t.subtasks[i].done = !t.subtasks[i].done;
+    t.updatedAt = Date.now();
     save(); clearTicks(); render();
   }
   function removeSub(id, i) {
@@ -1352,10 +1489,33 @@ body.compacto .status-wrap { margin-top: 8px; }
     t.subtasks.splice(i, 1);
     save(); clearTicks(); render();
   }
+  // Propone una lista de pasos según de qué trata la tarea
+  function pasosSugeridos(t) {
+    var txt = ((t.title || "") + " " + (t.desc || "")).toLowerCase();
+    if (t.cat === "trabajo") {
+      if (/backup|respaldo/.test(txt)) return ["Confirmar equipo y alcance", "Hacer el respaldo", "Verificar que quedó completo", "Responder al solicitante"];
+      if (/cuenta|contable|odoo|factura|egreso/.test(txt)) return ["Revisar la solicitud", "Crear o ajustar en el sistema", "Probar que aparece bien", "Responder al solicitante"];
+      if (/c[aá]mara|equipo|computador|perif[eé]rico|instalar/.test(txt)) return ["Diagnosticar el equipo", "Aplicar la solución", "Probar que funciona", "Responder y cerrar el ticket"];
+      return ["Entender la solicitud", "Revisar el sistema o equipo", "Aplicar la solución", "Verificar con el usuario", "Cerrar el ticket"];
+    }
+    if (/taller|informe|ensayo|documento|escrito/.test(txt)) return ["Leer el enunciado completo", "Investigar y reunir fuentes", "Escribir el desarrollo", "Agregar introducción y conclusiones", "Revisar y dar formato", "Subir al aula virtual"];
+    if (/examen|parcial|quiz|prueba/.test(txt)) return ["Reunir el material", "Resumir los temas", "Hacer ejercicios de práctica", "Repasar lo que falle"];
+    if (/expos|present|diapos|sustentaci/.test(txt)) return ["Armar el guion", "Diseñar las diapositivas", "Ensayar el tiempo", "Preparar respuestas a preguntas"];
+    if (/evaluaci|matriz|excel|xlsx|capacidad/.test(txt)) return ["Descargar el archivo base", "Completar los datos pedidos", "Revisar que no falte evidencia", "Subir la entrega"];
+    return ["Revisar bien qué piden", "Hacer el trabajo", "Revisar antes de entregar", "Entregar"];
+  }
+  function aplicarPasosSugeridos(id) {
+    var t = byId(id); if (!t) return;
+    if (!t.subtasks) t.subtasks = [];
+    pasosSugeridos(t).forEach(function (p) { t.subtasks.push({ text: p, done: false, note: "" }); });
+    t.updatedAt = Date.now();
+    save(); clearTicks(); render();
+  }
   function toggleAllSubs(id) {
     var t = byId(id); if (!t || !t.subtasks || !t.subtasks.length) return;
     var todosHechos = t.subtasks.every(function (s) { return s.done; });
     t.subtasks.forEach(function (s) { s.done = !todosHechos; });
+    t.updatedAt = Date.now();
     save(); clearTicks(); render();
   }
   function editSub(id, i, text) {
@@ -1386,6 +1546,7 @@ body.compacto .status-wrap { margin-top: 8px; }
   function addNote(id, text) {
     var t = byId(id); if (!t) return;
     taskNotes(t).push({ text: text, ts: Date.now() });
+    t.updatedAt = Date.now();
     save(); clearTicks(); render();
   }
   function editNote(id, i, text) {
@@ -1452,6 +1613,7 @@ body.compacto .status-wrap { margin-top: 8px; }
       form.fDue.value = t.due || "";
       form.fLink.value = t.link || "";
       form.fRepeat.value = t.repeat || "";
+      form.fHoras.value = t.horas || "";
       form.fMateria.value = t.materia || "";
       form.fPeople.value = (t.people || []).join(", ");
     } else {
@@ -1474,17 +1636,18 @@ body.compacto .status-wrap { margin-top: 8px; }
       due: form.fDue.value || "",
       link: form.fLink.value.trim(),
       repeat: form.fRepeat.value,
+      horas: parseFloat(form.fHoras.value) || 0,
       materia: form.fMateria.value.trim(),
       people: form.fPeople.value.split(",").map(function (p) { return p.trim(); }).filter(Boolean)
     };
     if (!data.title) return;
     if (editingId) {
       var t = byId(editingId);
-      t.title = data.title; t.desc = data.desc; t.cat = data.cat; t.prio = data.prio; t.due = data.due; t.link = data.link; t.repeat = data.repeat; t.materia = data.materia; t.people = data.people;
+      t.title = data.title; t.desc = data.desc; t.cat = data.cat; t.prio = data.prio; t.due = data.due; t.link = data.link; t.repeat = data.repeat; t.horas = data.horas; t.materia = data.materia; t.people = data.people;
     } else {
       tasks.push({
         id: uid(), title: data.title, desc: data.desc, cat: data.cat, prio: data.prio,
-        due: data.due, link: data.link, repeat: data.repeat, materia: data.materia, people: data.people, done: false, status: "sin_revisar", progress: 0,
+        due: data.due, link: data.link, repeat: data.repeat, horas: data.horas, materia: data.materia, people: data.people, done: false, status: "sin_revisar", progress: 0,
         subtasks: pendingSubtasks, created: Date.now()
       });
     }
@@ -2293,10 +2456,23 @@ body.compacto .status-wrap { margin-top: 8px; }
     function p(n) { return (n < 10 ? "0" : "") + n; }
     return fmtDate(d.toISOString().slice(0, 10)) + " · " + p(d.getHours()) + ":" + p(d.getMinutes());
   }
+  function fmtHoras(n) {
+    n = +n || 0;
+    if (n < 1) return Math.round(n * 60) + " min";
+    return (n % 1 === 0 ? n : n.toFixed(1).replace(".", ",")) + " h";
+  }
   function daysUntil(iso) {
     var p = iso.split("-"), due = new Date(p[0], p[1] - 1, p[2]);
     var now = new Date(); now.setHours(0, 0, 0, 0); due.setHours(0, 0, 0, 0);
     return Math.round((due - now) / 86400000);
+  }
+  // Tarea empezada pero sin movimientos en varios días
+  function estancada(t) {
+    if (t.done || !t.updatedAt) return "";
+    if (statusFor(t).key === "sin_revisar") return "";
+    var dias = Math.floor((Date.now() - t.updatedAt) / 86400000);
+    if (dias < 5) return "";
+    return "Sin avances hace " + dias + " días";
   }
   function dueClass(t) {
     if (t.done) return "";
@@ -2316,9 +2492,11 @@ body.compacto .status-wrap { margin-top: 8px; }
   }
 
   // Save running timers before leaving so nothing is lost
+  // Al cerrar, solo empujamos a Drive lo que quedara pendiente de guardar.
+  // No reescribimos el almacenamiento local: si tienes la app abierta en dos
+  // pestañas, cerrar una ya no pisa los cambios hechos en la otra.
   window.addEventListener("beforeunload", function () {
-    tasks.forEach(function (t) { if (t.running) { t.seconds = elapsed(t); t.running = null; } });
-    save();
+    if (driveToken && driveSaveTimer) { clearTimeout(driveSaveTimer); pushToDrive(); }
   });
 
   // Al volver a la pestaña, renueva el acceso en silencio para no cerrar la sesión.
