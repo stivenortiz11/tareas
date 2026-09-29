@@ -15,8 +15,11 @@ Abre `index.html` con doble clic y listo. También puedes subirla a Netlify (ver
 - Cronometrar el tiempo por tarea con play y pausa. Solo corre un cronómetro a la vez para que el total sea real.
 - Ver un aviso arriba cuando hay tareas atrasadas o para hoy.
 - Crear una tarea desde un pantallazo: subes la captura, se lee el texto y se rellenan los campos. Luego revisas y ajustas.
-- Buscar, ordenar por fecha, prioridad o progreso, y cambiar entre tema claro y oscuro.
+- Buscar, filtrar por materia y ordenar por fecha, prioridad, progreso o materia. Tema claro y oscuro.
+- Ver la fecha con aviso claro: "hoy", "mañana", "en 2 días" o "atrasada 3 días".
 - Ver tu horario recreado como tabla semanal editable (botón "Horario"): agregar, editar y quitar clases con día, hora y salón. También puedes subir el pantallazo original.
+- Descargar una copia de respaldo y restaurarla cuando quieras.
+- Instalarla en el celular como app (Agregar a pantalla de inicio) para abrirla a pantalla completa.
 - Saltar a tu app de gastos con el botón de la cabecera.
 
 ## Lectura de pantallazos (OCR)
