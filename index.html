@@ -282,6 +282,13 @@ select { cursor: pointer; }
 .note-date { font-size: 10.5px; color: var(--text-faint); white-space: nowrap; flex-shrink: 0; }
 .note-rem { background: none; border: none; color: var(--text-faint); cursor: pointer; padding: 3px; border-radius: 5px; display: grid; place-items: center; flex-shrink: 0; }
 .note-rem:hover { color: var(--danger); background: var(--surface-2); }
+.note-eye { background: none; border: none; color: var(--text-faint); cursor: pointer; padding: 3px; border-radius: 5px; display: grid; place-items: center; flex-shrink: 0; }
+.note-eye:hover { color: var(--accent); background: var(--surface-2); }
+.note-item.oculta .note-in { opacity: .55; font-style: italic; }
+.note-ask { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: space-between; background: var(--accent-soft); border: 1px solid var(--accent); border-radius: 9px; padding: 9px 12px; margin-bottom: 8px; font-size: 12.5px; color: var(--accent); font-weight: 600; }
+.note-ask-btns { display: flex; gap: 6px; }
+.note-ask button { font: inherit; font-size: 12px; font-weight: 700; border: 1px solid var(--accent); background: var(--surface); color: var(--accent); border-radius: 7px; padding: 4px 12px; cursor: pointer; }
+.note-ask button:hover { background: var(--accent); color: #fff; }
 .addsub { display: flex; gap: 6px; margin-top: 4px; }
 .addsub input { padding: 6px 10px; font-size: 13px; }
 .addsub button { border: 1px dashed var(--border); background: none; color: var(--text-soft); border-radius: 8px; padding: 6px 12px; cursor: pointer; font: inherit; font-size: 13px; white-space: nowrap; }
@@ -721,6 +728,8 @@ body.compacto .status-wrap { margin-top: 8px; }
   var materiaFilterVal = "todas";
   var remindDays = 2;       // avisar con esta antelación
   try { var rd = parseInt(localStorage.getItem(REMIND_KEY), 10); if (rd >= 0 && rd <= 14) remindDays = rd; } catch (e) {}
+  var pendingNoteChoice = {}; // tareas que acaban de cambiar de estado y esperan decisión sobre sus notas
+  var notesOpen = {};         // tareas con las notas ocultas desplegadas
   var dayFilter = "";       // día concreto elegido en el calendario (YYYY-MM-DD)
   var calCursor = null;     // mes que muestra el calendario
   var query = "";
@@ -1112,6 +1121,10 @@ body.compacto .status-wrap { margin-top: 8px; }
     var subs = t.subtasks || [];
     var sdone = subs.filter(function (s) { return s.done; }).length;
     var notesArr = taskNotes(t);
+    var notasVis = [], notasOc = [];
+    notesArr.forEach(function (n, i) { (n.oculta ? notasOc : notasVis).push({ n: n, i: i }); });
+    var verOcultas = !!notesOpen[t.id];
+    var notasAPintar = notasVis.concat(verOcultas ? notasOc : []);
 
     el.innerHTML =
       '<button class="check ' + (t.done ? "on" : "") + '" title="Marcar como hecha">' +
@@ -1164,14 +1177,28 @@ body.compacto .status-wrap { margin-top: 8px; }
           '<div class="addsub"><input data-subinput placeholder="Agregar paso..."><button data-subadd>Añadir paso</button></div>' +
         '</div>' +
         '<div class="notes">' +
-          '<div class="notes-h">Notas' + (notesArr.length ? ' <span>' + notesArr.length + '</span>' : '') + '</div>' +
-          notesArr.map(function (n, i) {
-            return '<div class="note-item">' +
+          '<div class="notes-h">Notas' + (notasVis.length ? ' <span>' + notasVis.length + '</span>' : '') + '</div>' +
+          (pendingNoteChoice[t.id] ? '<div class="note-ask">' +
+            '<span>Cambiaste el estado. ¿Qué hago con las notas de antes?</span>' +
+            '<span class="note-ask-btns">' +
+              '<button data-noteshide>Ocultar</button>' +
+              '<button data-notekeep>Mantener</button>' +
+            '</span></div>' : "") +
+          notasAPintar.map(function (o) {
+            var n = o.n, i = o.i;
+            return '<div class="note-item' + (n.oculta ? " oculta" : "") + '">' +
               '<input class="note-in" data-noteedit="' + i + '" value="' + esc(n.text) + '">' +
               (n.ts ? '<span class="note-date">' + esc(fmtDateTime(n.ts)) + '</span>' : '') +
+              '<button class="note-eye" data-notehide="' + i + '" title="' + (n.oculta ? "Mostrar de nuevo" : "Ocultar esta nota") + '">' +
+                (n.oculta
+                  ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>'
+                  : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.9 4.24A9.1 9.1 0 0 1 12 4c6.4 0 10 7 10 7a18 18 0 0 1-2.16 3.19M6.6 6.6A18 18 0 0 0 2 11s3.6 7 10 7a9 9 0 0 0 5.4-1.6"/><path d="m2 2 20 20"/></svg>') +
+              '</button>' +
               '<button class="note-rem" data-noterem="' + i + '" title="Quitar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>' +
             '</div>';
           }).join("") +
+          (notasOc.length ? '<button class="link-btn" data-toggleocultas style="margin:2px 0 6px">' +
+            (verOcultas ? "Volver a esconder las guardadas" : "Ver " + notasOc.length + " nota" + (notasOc.length > 1 ? "s" : "") + " guardada" + (notasOc.length > 1 ? "s" : "")) + '</button>' : "") +
           '<div class="addsub"><input data-noteinput placeholder="Escribe una nota..."><button data-noteadd>Agregar nota</button></div>' +
         '</div>' +
         ((t.due || t.link) ? '<div class="meta">' +
@@ -1219,6 +1246,15 @@ body.compacto .status-wrap { margin-top: 8px; }
     el.querySelectorAll("[data-noterem]").forEach(function (b) {
       b.onclick = function () { removeNote(t.id, parseInt(b.dataset.noterem, 10)); };
     });
+    el.querySelectorAll("[data-notehide]").forEach(function (b) {
+      b.onclick = function () { toggleNoteHidden(t.id, parseInt(b.dataset.notehide, 10)); };
+    });
+    var hideAllBtn = el.querySelector("[data-noteshide]");
+    if (hideAllBtn) hideAllBtn.onclick = function () { hideAllNotes(t.id); };
+    var keepBtn = el.querySelector("[data-notekeep]");
+    if (keepBtn) keepBtn.onclick = function () { delete pendingNoteChoice[t.id]; clearTicks(); render(); };
+    var togOc = el.querySelector("[data-toggleocultas]");
+    if (togOc) togOc.onclick = function () { notesOpen[t.id] = !notesOpen[t.id]; clearTicks(); render(); };
     var noteInput = el.querySelector("[data-noteinput]");
     var noteAdd = el.querySelector("[data-noteadd]");
     function doAddNote() { if (noteInput.value.trim()) addNote(t.id, noteInput.value.trim()); }
@@ -1236,8 +1272,12 @@ body.compacto .status-wrap { margin-top: 8px; }
   // ---- Actions ----
   function toggleDone(id) {
     var t = byId(id); if (!t) return;
+    var estadoPrevio = statusFor(t).key;
     t.done = !t.done;
-    if (t.done) { t.status = "terminada"; t.progress = 100; t.doneAt = Date.now(); spawnRepeat(t); }
+    if (t.done) {
+      if (estadoPrevio !== "terminada" && taskNotes(t).some(function (n) { return !n.oculta; })) pendingNoteChoice[id] = true;
+      t.status = "terminada"; t.progress = 100; t.doneAt = Date.now(); spawnRepeat(t);
+    }
     else {
       if (!t.status || t.status === "terminada") t.status = "iniciada";
       var st = statusByKey(t.status);
@@ -1249,6 +1289,8 @@ body.compacto .status-wrap { margin-top: 8px; }
     var t = byId(id); if (!t) return;
     var st = statusByKey(key); if (!st) return;
     var wasDone = t.done;
+    var estadoAnterior = statusFor(t).key;
+    if (estadoAnterior !== key && taskNotes(t).some(function (n) { return !n.oculta; })) pendingNoteChoice[id] = true;
     t.status = key;
     t.progress = st.pct;
     t.done = (key === "terminada");
@@ -1277,6 +1319,7 @@ body.compacto .status-wrap { margin-top: 8px; }
     delete n.doneAt; n.created = Date.now();
     n.due = advanceDue(t.due, t.repeat);
     n.notes = [];
+    delete pendingNoteChoice[n.id];
     (n.subtasks || []).forEach(function (s) { s.done = false; s.note = ""; });
     tasks.push(n);
   }
@@ -1349,6 +1392,17 @@ body.compacto .status-wrap { margin-top: 8px; }
     var t = byId(id); var arr = taskNotes(t); if (!arr[i]) return;
     arr[i].text = text;
     save(); // sin re-render, para no interrumpir mientras escribes
+  }
+  function toggleNoteHidden(id, i) {
+    var t = byId(id); var arr = taskNotes(t); if (!arr[i]) return;
+    arr[i].oculta = !arr[i].oculta;
+    save(); clearTicks(); render();
+  }
+  function hideAllNotes(id) {
+    var t = byId(id); if (!t) return;
+    taskNotes(t).forEach(function (n) { n.oculta = true; });
+    delete pendingNoteChoice[id];
+    save(); clearTicks(); render();
   }
   function removeNote(id, i) {
     var t = byId(id); var arr = taskNotes(t); if (!arr[i]) return;
