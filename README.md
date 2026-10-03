@@ -8,7 +8,7 @@ Abre `index.html` con doble clic y listo. También puedes subirla a Netlify (ver
 
 ## Qué puedes hacer
 
-- **Universidad y Trabajo como espacios independientes**, cada uno con su color (azul y ámbar) en las pestañas. Si solo usas uno, apaga el otro desde Ajustes: desaparece de las pestañas, del formulario y de las estadísticas, sin perder lo que ya tenías si lo vuelves a encender.
+- **Universidad y Trabajo como dos apartados completamente separados**, cada uno con su propio Hoy, Todas, Calendario y Realizadas (arriba eliges en cuál estás parado, con su color: azul para Universidad, ámbar para Trabajo). Una tarea nueva se crea siempre en el apartado donde estás, sin tener que elegir categoría. Si solo usas uno, apaga el otro desde Ajustes: desaparece del selector, del horario, de la materia y de las estadísticas, sin perder lo que ya tenías si lo vuelves a encender.
 - Crear tareas con título, detalle, categoría (Universidad o Trabajo), prioridad y fecha límite.
 - Asignar personas a cada tarea, no solo a ti. Se ven como iniciales en la tarjeta y puedes buscarlas por nombre.
 - Dividir cada tarea en pasos (checklist). El avance se calcula solo según los pasos que marcas.
@@ -34,7 +34,7 @@ Abre `index.html` con doble clic y listo. También puedes subirla a Netlify (ver
 - Contadores en las pestañas y atajos de teclado (N para nueva tarea, / para buscar).
 - Elegir con cuánta antelación quieres el aviso (mismo día, 1, 2, 3, 5 o 7 días).
 - **Resumen cada mañana** (opcional): una sola notificación con tu tarea más urgente y cuántas clases tienes hoy. Los avisos y recordatorios se revisan solos cada pocos minutos mientras tienes la app abierta, así no dependen de que hagas algo para refrescarse.
-- Buscar, filtrar por materia y ordenar por fecha, prioridad, progreso o materia. Tema claro y oscuro.
+- Buscar, filtrar por materia y ordenar por fecha, prioridad, progreso o materia. Tema claro y oscuro, con una paleta oscura pensada para buen contraste (fondo azulado profundo, acentos y colores de Universidad/Trabajo más vivos para leerse bien de noche).
 - Ver la fecha con aviso claro: "hoy", "mañana", "en 2 días" o "atrasada 3 días".
 - Ver tu horario recreado como tabla semanal editable (botón "Horario"): agregar, editar y quitar clases con día, hora y salón. También puedes subir el pantallazo original.
 - Descargar una copia de respaldo y restaurarla cuando quieras.

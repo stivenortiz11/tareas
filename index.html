@@ -50,39 +50,47 @@
 }
 :root:not([data-theme="light"]) {
   @media (prefers-color-scheme: dark) {
-    --bg: #0f1115;
-    --surface: #191c22;
-    --surface-2: #21252d;
-    --border: #2b303a;
-    --text: #e7eaf0;
-    --text-soft: #98a2b3;
-    --text-faint: #667085;
-    --accent: #818cf8;
-    --accent-soft: #26243b;
-    --uni-soft: #0b2d3f;
-    --work-soft: #3a2e0b;
-    --danger-soft: #3a1f1f;
-    --ok-soft: #0e2f26;
-    --shadow: 0 1px 3px rgba(0,0,0,.4);
-    --shadow-lg: 0 16px 40px rgba(0,0,0,.5);
+    --bg: #0a0d13;
+    --surface: #141922;
+    --surface-2: #1c222e;
+    --border: #2d3544;
+    --text: #eef1f6;
+    --text-soft: #a8b1c2;
+    --text-faint: #6b7385;
+    --accent: #8b93ff;
+    --accent-soft: #242b4d;
+    --uni: #38bdf8;
+    --uni-soft: #0c2e42;
+    --work: #fbbf24;
+    --work-soft: #3d2f0a;
+    --danger: #f87171;
+    --danger-soft: #3f1d1d;
+    --ok: #34d399;
+    --ok-soft: #0f3328;
+    --shadow: 0 1px 3px rgba(0,0,0,.5);
+    --shadow-lg: 0 20px 48px rgba(0,0,0,.6);
   }
 }
 :root[data-theme="dark"] {
-  --bg: #0f1115;
-  --surface: #191c22;
-  --surface-2: #21252d;
-  --border: #2b303a;
-  --text: #e7eaf0;
-  --text-soft: #98a2b3;
-  --text-faint: #667085;
-  --accent: #818cf8;
-  --accent-soft: #26243b;
-  --uni-soft: #0b2d3f;
-  --work-soft: #3a2e0b;
-  --danger-soft: #3a1f1f;
-  --ok-soft: #0e2f26;
-  --shadow: 0 1px 3px rgba(0,0,0,.4);
-  --shadow-lg: 0 16px 40px rgba(0,0,0,.5);
+  --bg: #0a0d13;
+  --surface: #141922;
+  --surface-2: #1c222e;
+  --border: #2d3544;
+  --text: #eef1f6;
+  --text-soft: #a8b1c2;
+  --text-faint: #6b7385;
+  --accent: #8b93ff;
+  --accent-soft: #242b4d;
+  --uni: #38bdf8;
+  --uni-soft: #0c2e42;
+  --work: #fbbf24;
+  --work-soft: #3d2f0a;
+  --danger: #f87171;
+  --danger-soft: #3f1d1d;
+  --ok: #34d399;
+  --ok-soft: #0f3328;
+  --shadow: 0 1px 3px rgba(0,0,0,.5);
+  --shadow-lg: 0 20px 48px rgba(0,0,0,.6);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 [hidden] { display: none !important; }
@@ -412,6 +420,25 @@ body.compacto .card { padding: 12px 14px; }
 body.compacto .status-wrap { margin-top: 8px; }
 #compactBtn.on { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
 
+/* Selector de apartado: Universidad | Trabajo */
+.space-switch { display: flex; gap: 10px; margin-bottom: 18px; }
+.space-btn {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 9px;
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: 14px;
+  padding: 13px 16px; font: inherit; font-size: 15px; font-weight: 700; color: var(--text-soft);
+  cursor: pointer; transition: border-color .15s, background .15s, color .15s, transform .15s, box-shadow .15s;
+}
+.space-btn:hover { border-color: var(--text-faint); transform: translateY(-1px); }
+.space-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--text-faint); flex-shrink: 0; }
+.space-dot.universidad { background: var(--uni); }
+.space-dot.trabajo { background: var(--work); }
+.space-btn.active { color: var(--text); box-shadow: var(--shadow); }
+.space-btn.active[data-space="universidad"] { border-color: var(--uni); background: var(--uni-soft); }
+.space-btn.active[data-space="trabajo"] { border-color: var(--work); background: var(--work-soft); }
+.space-n { font-size: 11.5px; font-weight: 700; background: var(--surface-2); color: var(--text-soft); border-radius: 99px; padding: 1px 8px; }
+.space-btn.active[data-space="universidad"] .space-n { background: var(--uni); color: #fff; }
+.space-btn.active[data-space="trabajo"] .space-n { background: var(--work); color: #fff; }
+
 /* Avance por materia */
 #byMateriaToggle { margin: -6px 0 14px; }
 .bym { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow); margin-bottom: 18px; display: flex; flex-direction: column; gap: 12px; }
@@ -609,6 +636,8 @@ body.compacto .status-wrap { margin-top: 8px; }
       </button>
     </div>
   </header>
+
+  <div class="space-switch" id="spaceSwitch"></div>
 
   <div id="sysBar"></div>
   <div id="alertBar"></div>
@@ -821,6 +850,7 @@ body.compacto .status-wrap { margin-top: 8px; }
   var MATERIAS_KEY = "organizador_materias";
   var REMIND_KEY = "organizador_dias_aviso";
   var SPACES_KEY = "organizador_espacios";
+  var ACTIVE_SPACE_KEY = "organizador_espacio_activo";
   var DIGEST_KEY = "organizador_resumen_diario";
   var LAST_DIGEST_KEY = "organizador_ultimo_resumen";
   var DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
@@ -830,6 +860,8 @@ body.compacto .status-wrap { margin-top: 8px; }
   // ---- State ----
   var tasks = load();
   var filter = "todas";
+  var activeSpace = "universidad"; // el apartado que estás viendo: "universidad" o "trabajo"
+  try { var asStored = localStorage.getItem(ACTIVE_SPACE_KEY); if (asStored === "universidad" || asStored === "trabajo") activeSpace = asStored; } catch (e) {}
   var materiaFilterVal = "todas";
   var remindDays = 2;       // avisar con esta antelación
   try { var rd = parseInt(localStorage.getItem(REMIND_KEY), 10); if (rd >= 0 && rd <= 14) remindDays = rd; } catch (e) {}
@@ -846,20 +878,29 @@ body.compacto .status-wrap { margin-top: 8px; }
     try { localStorage.setItem(SPACES_KEY, JSON.stringify(spaces)); } catch (e) {}
     if (driveToken) scheduleDriveSave();
   }
-  // Si el filtro activo apunta a un espacio que acabas de apagar, lo reacomoda.
-  function normalizeFilter() {
-    var onU = spaceOn("universidad"), onT = spaceOn("trabajo");
-    if (filter === "universidad" && !onU) filter = onT ? "todas" : "hoy";
-    if (filter === "trabajo" && !onT) filter = onU ? "todas" : "hoy";
-    if (filter === "todas" && !(onU && onT)) filter = onU ? "universidad" : (onT ? "trabajo" : "hoy");
+  // Si el apartado que estás viendo se apagó, salta al que sí sigue encendido.
+  function normalizeActiveSpace() {
+    if (!spaceOn(activeSpace)) {
+      var otros = activeSpaces();
+      if (otros.length) setActiveSpace(otros[0], true);
+    }
   }
-  // Oculta lo que solo tiene sentido si Universidad está encendida (horario, materias).
+  function setActiveSpace(cat, silencioso) {
+    if (cat !== "universidad" && cat !== "trabajo") return;
+    activeSpace = cat;
+    try { localStorage.setItem(ACTIVE_SPACE_KEY, activeSpace); } catch (e) {}
+    if (!silencioso) { dayFilter = ""; clearTicks(); render(); }
+  }
+  // Oculta lo que solo tiene sentido si estás viendo el apartado de Universidad
+  // (avance por materia, filtro de materia). El Horario queda siempre a mano
+  // en la cabecera mientras Universidad siga encendida, sin importar qué apartado mires.
   function applySpaceVisibility() {
     var onU = spaceOn("universidad");
+    var viendoUni = activeSpace === "universidad";
     var hb = document.getElementById("horarioBtn"); if (hb) hb.hidden = !onU;
-    var bm = document.getElementById("byMateriaToggle"); if (bm) bm.hidden = !onU;
-    var mf = document.getElementById("materiaFilter"); if (mf) mf.hidden = !onU;
-    if (!onU) {
+    var bm = document.getElementById("byMateriaToggle"); if (bm) bm.hidden = !viendoUni;
+    var mf = document.getElementById("materiaFilter"); if (mf) mf.hidden = !viendoUni;
+    if (!viendoUni) {
       var bp = document.getElementById("byMateriaPanel"); if (bp) bp.hidden = true;
       byMateriaOpen = false;
       if (materiaFilterVal !== "todas") materiaFilterVal = "todas";
@@ -870,6 +911,7 @@ body.compacto .status-wrap { margin-top: 8px; }
     if (spaces[cat] !== false && spaces[other] === false) { alert("Necesitas al menos un espacio activo (Universidad o Trabajo)."); return; }
     spaces[cat] = spaces[cat] === false ? true : false;
     saveSpaces();
+    normalizeActiveSpace();
     clearTicks(); render(); renderMateriasBody();
   }
   var pendingNoteChoice = {}; // tareas que acaban de cambiar de estado y esperan decisión sobre sus notas
@@ -1047,14 +1089,13 @@ body.compacto .status-wrap { margin-top: 8px; }
     var isHoy = filter === "hoy";
     var limite = dateStrPlus(7);
     var arr = tasks.filter(function (t) {
-      if (!spaceOn(t.cat)) return false;
+      if (t.cat !== activeSpace) return false;                     // cada apartado solo ve lo suyo
       if (showDone) { if (!t.done) return false; }
       else if (isHoy) {
         if (t.done) return false;
         if (!t.due || t.due > limite) return false;                // atrasadas, hoy y próximos 7 días
       } else {
         if (t.done && !dayFilter) return false;                    // las terminadas van a "Realizadas"
-        if (filter !== "todas" && t.cat !== filter) return false;
       }
       if (dayFilter && t.due !== dayFilter) return false;           // día elegido en el calendario
       if (materiaFilterVal !== "todas" && (t.materia || "") !== materiaFilterVal) return false;
@@ -1082,9 +1123,9 @@ body.compacto .status-wrap { margin-top: 8px; }
     var bar = document.getElementById("alertBar");
     var today = todayStr();
     var plus2 = dateStrPlus(remindDays);
-    var overdue = tasks.filter(function (t) { return spaceOn(t.cat) && !t.done && t.due && t.due < today; });
-    var dueToday = tasks.filter(function (t) { return spaceOn(t.cat) && !t.done && t.due === today; });
-    var soon = tasks.filter(function (t) { return spaceOn(t.cat) && !t.done && t.due && t.due > today && t.due <= plus2; });
+    var overdue = tasks.filter(function (t) { return t.cat === activeSpace && !t.done && t.due && t.due < today; });
+    var dueToday = tasks.filter(function (t) { return t.cat === activeSpace && !t.done && t.due === today; });
+    var soon = tasks.filter(function (t) { return t.cat === activeSpace && !t.done && t.due && t.due > today && t.due <= plus2; });
     if (!overdue.length && !dueToday.length && !soon.length) { bar.innerHTML = ""; return; }
     var parts = [];
     if (overdue.length) parts.push(overdue.length + " atrasada" + (overdue.length > 1 ? "s" : ""));
@@ -1099,6 +1140,8 @@ body.compacto .status-wrap { margin-top: 8px; }
   function dateStrPlus(n) { var d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
 
   function render() {
+    normalizeActiveSpace();
+    renderSpaceSwitcher();
     renderTabsBar();
     applySpaceVisibility();
     renderSysBar();
@@ -1157,11 +1200,9 @@ body.compacto .status-wrap { margin-top: 8px; }
   function renderTabCounts() {
     var today = todayStr(), lim = dateStrPlus(7);
     var counts = {
-      hoy: tasks.filter(function (t) { return spaceOn(t.cat) && !t.done && t.due && t.due <= lim; }).length,
-      todas: tasks.filter(function (t) { return spaceOn(t.cat) && !t.done; }).length,
-      universidad: tasks.filter(function (t) { return !t.done && t.cat === "universidad"; }).length,
-      trabajo: tasks.filter(function (t) { return !t.done && t.cat === "trabajo"; }).length,
-      realizadas: tasks.filter(function (t) { return spaceOn(t.cat) && t.done; }).length
+      hoy: tasks.filter(function (t) { return t.cat === activeSpace && !t.done && t.due && t.due <= lim; }).length,
+      todas: tasks.filter(function (t) { return t.cat === activeSpace && !t.done; }).length,
+      realizadas: tasks.filter(function (t) { return t.cat === activeSpace && t.done; }).length
     };
     document.querySelectorAll(".tcount").forEach(function (s) {
       var n = counts[s.dataset.c];
@@ -1169,26 +1210,30 @@ body.compacto .status-wrap { margin-top: 8px; }
     });
   }
 
-  // Panel "Hoy": clases del día + resumen rápido
+  // Panel "Hoy": clases del día (solo en Universidad) + resumen rápido del apartado activo
   function renderTodayPanel() {
+    var esUni = activeSpace === "universidad";
     var d = new Date().getDay();               // 0 domingo … 6 sábado
     var idx = d === 0 ? -9 : d - 1;            // 0 = lunes en DIAS
-    var clases = horarioData.filter(function (c) { return c.dia === idx; })
-      .sort(function (a, b) { return (a.inicio || "").localeCompare(b.inicio || ""); });
-    var html = '<div class="today-panel"><div class="today-h">Clases de hoy</div>';
-    html += clases.length
-      ? '<div class="today-classes">' + clases.map(function (c) {
-          return '<div class="today-class" style="border-left-color:' + hzColor(c.materia) + '">' +
-            '<span class="tc-time">' + esc(c.inicio + " – " + c.fin) + '</span>' +
-            '<span class="tc-mat">' + esc(c.materia) + '</span>' +
-            (c.salon ? '<span class="tc-room">' + esc(c.salon) + '</span>' : "") +
-          '</div>';
-        }).join("") + '</div>'
-      : '<p class="today-none">Hoy no tienes clases en tu horario.</p>';
-    html += '</div>';
+    var clases = esUni ? horarioData.filter(function (c) { return c.dia === idx; })
+      .sort(function (a, b) { return (a.inicio || "").localeCompare(b.inicio || ""); }) : [];
+    var html = "";
+    if (esUni) {
+      html += '<div class="today-panel"><div class="today-h">Clases de hoy</div>';
+      html += clases.length
+        ? '<div class="today-classes">' + clases.map(function (c) {
+            return '<div class="today-class" style="border-left-color:' + hzColor(c.materia) + '">' +
+              '<span class="tc-time">' + esc(c.inicio + " – " + c.fin) + '</span>' +
+              '<span class="tc-mat">' + esc(c.materia) + '</span>' +
+              (c.salon ? '<span class="tc-room">' + esc(c.salon) + '</span>' : "") +
+            '</div>';
+          }).join("") + '</div>'
+        : '<p class="today-none">Hoy no tienes clases en tu horario.</p>';
+      html += '</div>';
+    }
 
-    // Plan: por dónde empezar hoy, según urgencia
-    var pendientes = tasks.filter(function (t) { return spaceOn(t.cat) && !t.done; })
+    // Plan: por dónde empezar hoy, según urgencia (solo tareas de este apartado)
+    var pendientes = tasks.filter(function (t) { return t.cat === activeSpace && !t.done; })
       .sort(function (a, b) { return urgencyScore(b) - urgencyScore(a); });
     var top = pendientes.slice(0, 3);
     if (top.length) {
@@ -1202,19 +1247,19 @@ body.compacto .status-wrap { margin-top: 8px; }
         top.map(function (t) {
           return '<li><span class="plan-t">' + esc(t.title) + '</span>' +
             '<span class="plan-why">' + esc(urgencyReason(t)) +
-            (t.materia ? " · " + esc(t.materia) : (t.cat === "trabajo" ? " · Trabajo" : "")) + '</span>' +
+            (t.materia ? " · " + esc(t.materia) : "") + '</span>' +
             (t.horas ? '<span class="plan-h2">≈ ' + esc(fmtHoras(t.horas)) + "</span>" : "") + "</li>";
         }).join("") + "</ol>" +
         '<p class="plan-sum">' +
           (horasTop ? "Estas 3 suman unas " + fmtHoras(horasTop) + ". " : "") +
-          (horasClase ? "Hoy tienes " + fmtHoras(horasClase) + " de clase." : "Hoy no tienes clase, buen día para adelantar.") +
+          (esUni ? (horasClase ? "Hoy tienes " + fmtHoras(horasClase) + " de clase." : "Hoy no tienes clase, buen día para adelantar.") : "") +
         "</p></div>";
     }
 
-    // Aviso de días congestionados en las próximas 2 semanas
+    // Aviso de días congestionados en las próximas 2 semanas (de este apartado)
     var porDia = {}, hoyIso = todayStr(), tope = dateStrPlus(14);
     tasks.forEach(function (t) {
-      if (!spaceOn(t.cat) || t.done || !t.due) return;
+      if (t.cat !== activeSpace || t.done || !t.due) return;
       if (t.due < hoyIso || t.due > tope) return;
       (porDia[t.due] = porDia[t.due] || []).push(t);
     });
@@ -1246,7 +1291,7 @@ body.compacto .status-wrap { margin-top: 8px; }
     var daysInMonth = new Date(y, m + 1, 0).getDate();
     var today = todayStr();
     var byDate = {};
-    tasks.forEach(function (t) { if (t.due && spaceOn(t.cat)) (byDate[t.due] = byDate[t.due] || []).push(t); });
+    tasks.forEach(function (t) { if (t.due && t.cat === activeSpace) (byDate[t.due] = byDate[t.due] || []).push(t); });
 
     var html = '<div class="cal">' +
       '<div class="cal-head">' +
@@ -1312,13 +1357,13 @@ body.compacto .status-wrap { margin-top: 8px; }
     var b = document.getElementById("clearDone");
     if (b) b.onclick = function () {
       if (!confirm("¿Borrar definitivamente todas las tareas realizadas? No se puede deshacer.")) return;
-      tasks = tasks.filter(function (t) { return !t.done || !spaceOn(t.cat); });
+      tasks = tasks.filter(function (t) { return !t.done || t.cat !== activeSpace; });
       save(); clearTicks(); render();
     };
   }
 
   function renderStats() {
-    var visibles = tasks.filter(function (t) { return spaceOn(t.cat); });
+    var visibles = tasks.filter(function (t) { return t.cat === activeSpace; });
     var total = visibles.length;
     var done = visibles.filter(function (t) { return t.done; }).length;
     var pending = total - done;
@@ -1341,12 +1386,12 @@ body.compacto .status-wrap { margin-top: 8px; }
   function renderByMateria() {
     var panel = document.getElementById("byMateriaPanel");
     if (!panel) return;
-    panel.hidden = !byMateriaOpen;
-    if (!byMateriaOpen) return;
+    panel.hidden = !byMateriaOpen || activeSpace !== "universidad";
+    if (panel.hidden) return;
     var grupos = {};
     tasks.forEach(function (t) {
-      if (!spaceOn(t.cat)) return;
-      var k = t.materia ? t.materia : (t.cat === "trabajo" ? "Trabajo" : "Sin materia");
+      if (t.cat !== "universidad") return;
+      var k = t.materia || "Sin materia";
       grupos[k] = grupos[k] || { total: 0, done: 0, pend: 0, atras: 0 };
       grupos[k].total++;
       if (t.done) grupos[k].done++; else {
@@ -1754,8 +1799,7 @@ body.compacto .status-wrap { margin-top: 8px; }
       form.fPeople.value = (t.people || []).join(", ");
     } else {
       form.reset();
-      var defCat = (filter === "universidad" || filter === "trabajo") && spaceOn(filter) ? filter : activeSpaces()[0] || "universidad";
-      form.fCat.value = defCat;
+      form.fCat.value = activeSpace;   // la tarea nueva nace en el apartado que estás viendo
       form.fPrio.value = "media";
     }
     toggleMateriaField();
@@ -1766,16 +1810,13 @@ body.compacto .status-wrap { margin-top: 8px; }
     var mf = document.getElementById("materiaField");
     if (mf) mf.hidden = form.fCat.value !== "universidad";
   }
-  // Muestra u oculta el selector de Categoría cuando solo tienes un espacio activo.
+  // El selector de Categoría ya no hace falta: cada tarea nace en el apartado
+  // que estás viendo (Universidad o Trabajo). Se mantiene oculto siempre.
   function updateCatFieldVisibility() {
-    var onU = spaceOn("universidad"), onT = spaceOn("trabajo");
     var wrap = document.getElementById("catFieldWrap");
     var row2 = document.getElementById("catPrioField").querySelector(".row2");
-    if (onU && onT) { wrap.hidden = false; row2.classList.remove("single"); }
-    else {
-      wrap.hidden = true; row2.classList.add("single");
-      form.fCat.value = onU ? "universidad" : "trabajo";
-    }
+    wrap.hidden = true;
+    row2.classList.add("single");
   }
   function closeModal() { overlay.classList.remove("open"); editingId = null; }
 
@@ -1818,30 +1859,44 @@ body.compacto .status-wrap { margin-top: 8px; }
   });
 
   // ---- Toolbar ----
-  var TAB_LABELS = { hoy: "Hoy", todas: "Todas", universidad: "Universidad", trabajo: "Trabajo", calendario: "Calendario", realizadas: "Realizadas" };
+  // El espacio (Universidad/Trabajo) ya no es una pestaña más: es el apartado
+  // completo que estás viendo, con su propio Hoy/Todas/Calendario/Realizadas.
+  var TAB_LABELS = { hoy: "Hoy", todas: "Todas", calendario: "Calendario", realizadas: "Realizadas" };
   function renderTabsBar() {
-    normalizeFilter();
-    var onU = spaceOn("universidad"), onT = spaceOn("trabajo");
-    var keys = ["hoy"];
-    if (onU && onT) keys.push("todas");
-    if (onU) keys.push("universidad");
-    if (onT) keys.push("trabajo");
-    keys.push("calendario", "realizadas");
+    var keys = ["hoy", "todas", "calendario", "realizadas"];
     var tabsEl = document.getElementById("tabs");
     tabsEl.innerHTML = keys.map(function (k) {
       var withCount = k !== "calendario";
-      return '<button class="tab' + (k === filter ? " active" : "") + '" data-cat="' + k + '">' + TAB_LABELS[k] +
+      return '<button class="tab' + (k === filter ? " active" : "") + '" data-cat="' + activeSpace + '" data-k="' + k + '">' + TAB_LABELS[k] +
         (withCount ? '<span class="tcount" data-c="' + k + '"></span>' : "") + "</button>";
     }).join("");
   }
   document.getElementById("tabs").onclick = function (e) {
     var btn = e.target.closest(".tab"); if (!btn) return;
-    document.querySelectorAll(".tab").forEach(function (b) { b.classList.remove("active"); });
-    btn.classList.add("active");
-    filter = btn.dataset.cat;
+    filter = btn.dataset.k;
     dayFilter = "";
     clearTicks(); render();
   };
+  // Selector de apartado: Universidad | Trabajo, cada uno con su color.
+  // Si solo tienes un espacio encendido, no hace falta elegir y no se muestra.
+  var SPACE_LABELS = { universidad: "Universidad", trabajo: "Trabajo" };
+  function renderSpaceSwitcher() {
+    var el = document.getElementById("spaceSwitch");
+    if (!el) return;
+    var espacios = activeSpaces();
+    if (espacios.length < 2) { el.hidden = true; el.innerHTML = ""; return; }
+    el.hidden = false;
+    el.innerHTML = espacios.map(function (k) {
+      var n = tasks.filter(function (t) { return t.cat === k && !t.done; }).length;
+      return '<button class="space-btn' + (k === activeSpace ? " active" : "") + '" data-space="' + k + '">' +
+        '<span class="space-dot ' + k + '"></span>' + SPACE_LABELS[k] +
+        (n ? '<span class="space-n">' + n + '</span>' : "") + '</button>';
+    }).join("");
+    el.querySelectorAll("[data-space]").forEach(function (b) {
+      // Al cambiar de apartado te quedas en la misma vista (Hoy, Calendario...), solo que del otro espacio.
+      b.onclick = function () { setActiveSpace(b.dataset.space); };
+    });
+  }
   document.getElementById("search").oninput = function (e) { query = e.target.value.toLowerCase().trim(); clearTicks(); render(); };
   document.getElementById("sort").onchange = function (e) { sortBy = e.target.value; clearTicks(); render(); };
   document.getElementById("materiaFilter").onchange = function (e) { materiaFilterVal = e.target.value; clearTicks(); render(); };
@@ -2225,20 +2280,20 @@ body.compacto .status-wrap { margin-top: 8px; }
     var person = extractPerson(lines);
     if (person && !form.fPeople.value.trim()) { form.fPeople.value = person; det.push({ k: "Persona", v: person }); }
 
-    // Categoría por puntaje: cuenta señales de universidad vs. trabajo y gana la mayor.
-    // Si el espacio detectado está apagado, se queda con el que sí tengas activo.
+    // La categoría ya la define el apartado donde estás creando la tarea.
+    // Aun así avisamos si el texto suena más del otro espacio, por si te
+    // conviene crearla allá en vez de aquí.
     var uniKW = low.match(/\b(clase|profesor|profesora|universidad|examen|parcial|semestre|c[aá]tedra|materia|laboratorio|ensayo|tesis|taller|aula|corte|docente|sustentaci[oó]n|m[oó]dulo|objetivo de aprendizaje|entregable|r[uú]brica)\b/g) || [];
     var workKW = low.match(/\b(pqr|ticket|requerimiento|soporte|cliente|factura|cuenta contable|contable|odoo|egresos|recibos|asunto|remitente|coordinador|auxiliar|woden|colaborador|etapa|solicito|cordialmente|saludos cordiales|reporte|informe|oficina|jefe|reuni[oó]n)\b/g) || [];
     if (/\[ext\]/.test(low)) workKW.push("ext");
     var catDetectada = workKW.length > uniKW.length ? "trabajo" : (uniKW.length > workKW.length ? "universidad" : "");
-    if (catDetectada && spaceOn(catDetectada)) {
-      form.fCat.value = catDetectada;
-      det.push({ k: "Categoría", v: catDetectada === "trabajo" ? "Trabajo" : "Universidad" });
+    if (catDetectada && catDetectada !== activeSpace && spaceOn(catDetectada)) {
+      det.push({ k: "Ojo", v: "esto parece de " + (catDetectada === "trabajo" ? "Trabajo" : "Universidad") });
     }
     toggleMateriaField();
 
     // Materia: para universidad, la deduce y la ajusta a tu lista si coincide.
-    if (form.fCat.value === "universidad") {
+    if (activeSpace === "universidad") {
       var materia = matchMateria(extractMateria(lines));
       if (materia) { form.fMateria.value = materia; det.push({ k: "Materia", v: materia }); }
     }
