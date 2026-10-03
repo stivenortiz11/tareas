@@ -99,28 +99,33 @@ body {
 header { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
 .logo { display: flex; align-items: center; gap: 12px; }
 .logo-mark {
-  width: 42px; height: 42px; border-radius: 12px;
+  width: 44px; height: 44px; border-radius: 13px;
   background: linear-gradient(135deg, var(--accent), #7c3aed);
   display: grid; place-items: center; color: #fff; flex-shrink: 0;
+  box-shadow: 0 4px 14px -2px rgba(79,70,229,.45);
 }
-.logo h1 { font-size: 20px; font-weight: 700; letter-spacing: -.02em; }
-.logo p { font-size: 13px; color: var(--text-soft); }
+.logo h1 { font-size: 21px; font-weight: 800; letter-spacing: -.02em; }
+.logo p { font-size: 13px; color: var(--text-soft); margin-top: 1px; }
 .header-actions { margin-left: auto; display: flex; gap: 8px; }
 .icon-btn {
   width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--border);
   background: var(--surface); color: var(--text-soft); cursor: pointer;
-  display: grid; place-items: center; transition: .15s;
+  display: grid; place-items: center; transition: transform .15s, box-shadow .15s, color .15s, background .15s;
 }
-.icon-btn:hover { background: var(--surface-2); color: var(--text); }
+.icon-btn:hover { background: var(--surface-2); color: var(--text); transform: translateY(-1px); box-shadow: var(--shadow); }
+.icon-btn:active { transform: translateY(0); }
 
 /* Stats */
-.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
 .stat {
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-  padding: 16px; box-shadow: var(--shadow);
+  padding: 16px; box-shadow: var(--shadow); transition: box-shadow .15s, transform .15s;
+  position: relative; overflow: hidden;
 }
-.stat .num { font-size: 26px; font-weight: 700; letter-spacing: -.02em; }
-.stat .lbl { font-size: 12px; color: var(--text-soft); font-weight: 500; margin-top: 2px; }
+.stat:hover { box-shadow: var(--shadow-lg); transform: translateY(-1px); }
+.stat .ic { width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); margin-bottom: 9px; }
+.stat .num { font-size: 25px; font-weight: 800; letter-spacing: -.02em; line-height: 1; }
+.stat .lbl { font-size: 12px; color: var(--text-soft); font-weight: 500; margin-top: 4px; }
 .stat .bar { height: 6px; background: var(--surface-2); border-radius: 99px; margin-top: 10px; overflow: hidden; }
 .stat .bar i { display: block; height: 100%; background: var(--ok); border-radius: 99px; transition: width .4s; }
 
@@ -140,6 +145,11 @@ header { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-
   font: inherit; font-size: 13px; font-weight: 500; color: var(--text-soft); transition: .15s;
 }
 .tab.active { background: var(--accent-soft); color: var(--accent); }
+.tab.active[data-cat="universidad"] { background: var(--uni-soft); color: var(--uni); }
+.tab.active[data-cat="trabajo"] { background: var(--work-soft); color: var(--work); }
+.tab.active[data-cat="universidad"] .tcount { background: var(--uni); }
+.tab.active[data-cat="trabajo"] .tcount { background: var(--work); }
+.tab:hover:not(.active) { color: var(--text); background: var(--surface-2); }
 .grow { flex: 1; min-width: 160px; }
 input, select, textarea {
   font: inherit; color: var(--text); background: var(--surface);
@@ -154,11 +164,14 @@ select { cursor: pointer; }
 .btn {
   font: inherit; font-weight: 600; font-size: 14px; cursor: pointer; border: none;
   border-radius: 10px; padding: 10px 18px; display: inline-flex; align-items: center; gap: 8px;
-  background: var(--accent); color: #fff; transition: .15s; white-space: nowrap;
+  background: var(--accent); color: #fff; transition: filter .15s, transform .15s, box-shadow .15s; white-space: nowrap;
+  box-shadow: 0 2px 8px -2px rgba(79,70,229,.4);
 }
-.btn:hover { filter: brightness(1.08); }
-.btn.ghost { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
-.btn.ghost:hover { background: var(--surface-2); }
+.btn:hover { filter: brightness(1.08); transform: translateY(-1px); box-shadow: 0 4px 12px -2px rgba(79,70,229,.5); }
+.btn:active { transform: translateY(0); }
+.btn.ghost { background: var(--surface); color: var(--text); border: 1px solid var(--border); box-shadow: none; }
+.btn.ghost:hover { background: var(--surface-2); transform: translateY(-1px); box-shadow: var(--shadow); }
+.btn.ghost:active { transform: translateY(0); }
 
 /* Task list */
 .list { display: flex; flex-direction: column; gap: 12px; }
@@ -168,7 +181,7 @@ select { cursor: pointer; }
   transition: box-shadow .15s, transform .15s; position: relative; overflow: hidden;
   animation: cardIn .25s ease both;
 }
-.card:hover { box-shadow: var(--shadow-lg); }
+.card:hover { box-shadow: var(--shadow-lg); transform: translateY(-1px); border-color: var(--border); }
 @keyframes cardIn { from { opacity: 0; transform: translateY(6px); } }
 @media (prefers-reduced-motion: reduce) { .card { animation: none; } }
 .card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--accent); }
@@ -179,9 +192,10 @@ select { cursor: pointer; }
 .check {
   width: 24px; height: 24px; border-radius: 7px; border: 2px solid var(--border);
   cursor: pointer; flex-shrink: 0; margin-top: 2px; display: grid; place-items: center;
-  color: #fff; transition: .15s; background: transparent;
+  color: #fff; transition: transform .12s, background .15s, border-color .15s; background: transparent;
 }
-.check.on { background: var(--ok); border-color: var(--ok); }
+.check:hover { border-color: var(--ok); }
+.check.on { background: var(--ok); border-color: var(--ok); transform: scale(1.05); }
 .card-body { flex: 1; min-width: 0; }
 .card-top { display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap; }
 .title { font-weight: 600; font-size: 15px; word-break: break-word; }
@@ -345,6 +359,19 @@ select { cursor: pointer; }
 .mrow span { flex: 1; font-size: 14px; }
 .mrem { background: none; border: none; color: var(--text-faint); cursor: pointer; display: grid; place-items: center; padding: 2px; }
 .mrem:hover { color: var(--danger); }
+
+/* Ajustes: secciones e interruptores */
+.settings-section { padding: 16px 0; border-top: 1px solid var(--border); }
+.settings-section:first-child { padding-top: 0; border-top: none; }
+.settings-h { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 12px; }
+.settings-h svg { color: var(--accent); flex-shrink: 0; }
+.sw-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 9px 0; }
+.sw-label { font-size: 13.5px; font-weight: 600; }
+.sw-desc { font-size: 11.5px; color: var(--text-soft); margin-top: 1px; }
+.sw { position: relative; width: 42px; height: 24px; border-radius: 99px; border: none; background: var(--surface-2); border: 1px solid var(--border); cursor: pointer; flex-shrink: 0; transition: background .15s, border-color .15s; padding: 0; }
+.sw .sw-knob { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: transform .15s; }
+.sw.on { background: var(--accent); border-color: var(--accent); }
+.sw.on .sw-knob { transform: translateX(18px); }
 .remind-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--text-soft); }
 .remind-row select { width: auto; }
 @keyframes pop { from { transform: translateY(12px) scale(.98); opacity: 0; } }
@@ -354,6 +381,7 @@ select { cursor: pointer; }
 .modal-body { padding: 22px; display: flex; flex-direction: column; gap: 16px; }
 .field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
 .field .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.field .row2.single { grid-template-columns: 1fr; }
 .modal-foot { padding: 16px 22px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; }
 
 .alert-bar {
@@ -461,6 +489,10 @@ body.compacto .status-wrap { margin-top: 8px; }
 .shot-status.load { color: var(--text-soft); }
 .shot-status.ok { color: var(--ok); }
 .shot-status.err { color: var(--danger); }
+.detected-box { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 10px; padding: 10px 12px; background: var(--ok-soft); border: 1px solid var(--ok); border-radius: 10px; }
+.detected-label { font-size: 11.5px; font-weight: 700; color: var(--ok); text-transform: uppercase; letter-spacing: .03em; }
+.detected-chip { font-size: 12px; color: var(--text-soft); background: var(--surface); border-radius: 99px; padding: 3px 10px; }
+.detected-chip b { color: var(--text); font-weight: 700; }
 
 /* Puerta de acceso */
 .gate {
@@ -586,14 +618,7 @@ body.compacto .status-wrap { margin-top: 8px; }
   <div id="byMateriaPanel" hidden></div>
 
   <div class="toolbar">
-    <div class="tabs" id="tabs">
-      <button class="tab" data-cat="hoy">Hoy<span class="tcount" data-c="hoy"></span></button>
-      <button class="tab active" data-cat="todas">Todas<span class="tcount" data-c="todas"></span></button>
-      <button class="tab" data-cat="universidad">Universidad<span class="tcount" data-c="universidad"></span></button>
-      <button class="tab" data-cat="trabajo">Trabajo<span class="tcount" data-c="trabajo"></span></button>
-      <button class="tab" data-cat="calendario">Calendario</button>
-      <button class="tab" data-cat="realizadas">Realizadas<span class="tcount" data-c="realizadas"></span></button>
-    </div>
+    <div class="tabs" id="tabs"></div>
     <div class="grow search">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
       <input id="search" type="search" placeholder="Buscar tarea...">
@@ -694,6 +719,7 @@ body.compacto .status-wrap { margin-top: 8px; }
             <input id="fShot" type="file" accept="image/*" hidden>
           </label>
           <div id="shotStatus" class="shot-status"></div>
+          <div id="detectedBox" class="detected-box" hidden></div>
         </div>
         <div class="field">
           <label for="fTitle">Título</label>
@@ -703,9 +729,9 @@ body.compacto .status-wrap { margin-top: 8px; }
           <label for="fDesc">Detalle (opcional)</label>
           <textarea id="fDesc" rows="2" placeholder="Notas, requisitos, enlaces..."></textarea>
         </div>
-        <div class="field">
+        <div class="field" id="catPrioField">
           <div class="row2">
-            <div>
+            <div id="catFieldWrap">
               <label for="fCat">Categoría</label>
               <select id="fCat">
                 <option value="universidad">Universidad</option>
@@ -747,8 +773,8 @@ body.compacto .status-wrap { margin-top: 8px; }
           <label for="fLink">Enlace (opcional)</label>
           <input id="fLink" type="url" placeholder="https://aula.virtual/... o el ticket">
         </div>
-        <div class="field">
-          <label for="fMateria">Materia (universidad, opcional)</label>
+        <div class="field" id="materiaField">
+          <label for="fMateria">Materia</label>
           <input id="fMateria" list="materiasList" placeholder="Elige o escribe la materia" autocomplete="off">
           <datalist id="materiasList"></datalist>
           <button type="button" id="editMateriasLink" class="link-btn">Editar mis materias</button>
@@ -794,6 +820,9 @@ body.compacto .status-wrap { margin-top: 8px; }
   var HORARIO_DATA_KEY = "organizador_horario_data";
   var MATERIAS_KEY = "organizador_materias";
   var REMIND_KEY = "organizador_dias_aviso";
+  var SPACES_KEY = "organizador_espacios";
+  var DIGEST_KEY = "organizador_resumen_diario";
+  var LAST_DIGEST_KEY = "organizador_ultimo_resumen";
   var DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
   var DRIVE_FILE_KEY = "organizador_drive_file_id";
   var DRIVE_FILE_NAME = "organizador-tareas.json";
@@ -804,6 +833,45 @@ body.compacto .status-wrap { margin-top: 8px; }
   var materiaFilterVal = "todas";
   var remindDays = 2;       // avisar con esta antelación
   try { var rd = parseInt(localStorage.getItem(REMIND_KEY), 10); if (rd >= 0 && rd <= 14) remindDays = rd; } catch (e) {}
+  var digestOn = false;     // resumen diario por notificación
+  try { digestOn = localStorage.getItem(DIGEST_KEY) === "1"; } catch (e) {}
+
+  // Espacios: puedes apagar Universidad o Trabajo si no te hace falta uno de los dos.
+  // Al menos uno se queda siempre encendido.
+  var spaces = { universidad: true, trabajo: true };
+  try { var spStored = JSON.parse(localStorage.getItem(SPACES_KEY) || "null"); if (spStored && typeof spStored === "object") spaces = Object.assign(spaces, spStored); } catch (e) {}
+  function spaceOn(cat) { return cat === "trabajo" ? spaces.trabajo !== false : spaces.universidad !== false; }
+  function activeSpaces() { var a = []; if (spaceOn("universidad")) a.push("universidad"); if (spaceOn("trabajo")) a.push("trabajo"); return a; }
+  function saveSpaces() {
+    try { localStorage.setItem(SPACES_KEY, JSON.stringify(spaces)); } catch (e) {}
+    if (driveToken) scheduleDriveSave();
+  }
+  // Si el filtro activo apunta a un espacio que acabas de apagar, lo reacomoda.
+  function normalizeFilter() {
+    var onU = spaceOn("universidad"), onT = spaceOn("trabajo");
+    if (filter === "universidad" && !onU) filter = onT ? "todas" : "hoy";
+    if (filter === "trabajo" && !onT) filter = onU ? "todas" : "hoy";
+    if (filter === "todas" && !(onU && onT)) filter = onU ? "universidad" : (onT ? "trabajo" : "hoy");
+  }
+  // Oculta lo que solo tiene sentido si Universidad está encendida (horario, materias).
+  function applySpaceVisibility() {
+    var onU = spaceOn("universidad");
+    var hb = document.getElementById("horarioBtn"); if (hb) hb.hidden = !onU;
+    var bm = document.getElementById("byMateriaToggle"); if (bm) bm.hidden = !onU;
+    var mf = document.getElementById("materiaFilter"); if (mf) mf.hidden = !onU;
+    if (!onU) {
+      var bp = document.getElementById("byMateriaPanel"); if (bp) bp.hidden = true;
+      byMateriaOpen = false;
+      if (materiaFilterVal !== "todas") materiaFilterVal = "todas";
+    }
+  }
+  function toggleSpace(cat) {
+    var other = cat === "universidad" ? "trabajo" : "universidad";
+    if (spaces[cat] !== false && spaces[other] === false) { alert("Necesitas al menos un espacio activo (Universidad o Trabajo)."); return; }
+    spaces[cat] = spaces[cat] === false ? true : false;
+    saveSpaces();
+    clearTicks(); render(); renderMateriasBody();
+  }
   var pendingNoteChoice = {}; // tareas que acaban de cambiar de estado y esperan decisión sobre sus notas
   var notesOpen = {};         // tareas con las notas ocultas desplegadas
   var dayFilter = "";       // día concreto elegido en el calendario (YYYY-MM-DD)
@@ -860,7 +928,7 @@ body.compacto .status-wrap { margin-top: 8px; }
     }
     if (driveToken) scheduleDriveSave();
   }
-  function snapshot() { return { tasks: tasks, horario: horario, horarioData: horarioData, materias: MATERIAS }; }
+  function snapshot() { return { tasks: tasks, horario: horario, horarioData: horarioData, materias: MATERIAS, espacios: spaces, resumenDiario: digestOn }; }
   function saveHorario() {
     try { if (horario) localStorage.setItem(HORARIO_KEY, horario); else localStorage.removeItem(HORARIO_KEY); } catch (e) {}
     if (driveToken) scheduleDriveSave();
@@ -979,6 +1047,7 @@ body.compacto .status-wrap { margin-top: 8px; }
     var isHoy = filter === "hoy";
     var limite = dateStrPlus(7);
     var arr = tasks.filter(function (t) {
+      if (!spaceOn(t.cat)) return false;
       if (showDone) { if (!t.done) return false; }
       else if (isHoy) {
         if (t.done) return false;
@@ -1013,9 +1082,9 @@ body.compacto .status-wrap { margin-top: 8px; }
     var bar = document.getElementById("alertBar");
     var today = todayStr();
     var plus2 = dateStrPlus(remindDays);
-    var overdue = tasks.filter(function (t) { return !t.done && t.due && t.due < today; });
-    var dueToday = tasks.filter(function (t) { return !t.done && t.due === today; });
-    var soon = tasks.filter(function (t) { return !t.done && t.due && t.due > today && t.due <= plus2; });
+    var overdue = tasks.filter(function (t) { return spaceOn(t.cat) && !t.done && t.due && t.due < today; });
+    var dueToday = tasks.filter(function (t) { return spaceOn(t.cat) && !t.done && t.due === today; });
+    var soon = tasks.filter(function (t) { return spaceOn(t.cat) && !t.done && t.due && t.due > today && t.due <= plus2; });
     if (!overdue.length && !dueToday.length && !soon.length) { bar.innerHTML = ""; return; }
     var parts = [];
     if (overdue.length) parts.push(overdue.length + " atrasada" + (overdue.length > 1 ? "s" : ""));
@@ -1030,11 +1099,14 @@ body.compacto .status-wrap { margin-top: 8px; }
   function dateStrPlus(n) { var d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
 
   function render() {
+    renderTabsBar();
+    applySpaceVisibility();
     renderSysBar();
     renderAlert();
     renderStats();
     renderTabCounts();
     checkReminders(false);
+    checkDailyDigest();
     listEl.innerHTML = "";
 
     if (filter === "calendario") { renderCalendario(); return; }
@@ -1085,11 +1157,11 @@ body.compacto .status-wrap { margin-top: 8px; }
   function renderTabCounts() {
     var today = todayStr(), lim = dateStrPlus(7);
     var counts = {
-      hoy: tasks.filter(function (t) { return !t.done && t.due && t.due <= lim; }).length,
-      todas: tasks.filter(function (t) { return !t.done; }).length,
+      hoy: tasks.filter(function (t) { return spaceOn(t.cat) && !t.done && t.due && t.due <= lim; }).length,
+      todas: tasks.filter(function (t) { return spaceOn(t.cat) && !t.done; }).length,
       universidad: tasks.filter(function (t) { return !t.done && t.cat === "universidad"; }).length,
       trabajo: tasks.filter(function (t) { return !t.done && t.cat === "trabajo"; }).length,
-      realizadas: tasks.filter(function (t) { return t.done; }).length
+      realizadas: tasks.filter(function (t) { return spaceOn(t.cat) && t.done; }).length
     };
     document.querySelectorAll(".tcount").forEach(function (s) {
       var n = counts[s.dataset.c];
@@ -1116,7 +1188,7 @@ body.compacto .status-wrap { margin-top: 8px; }
     html += '</div>';
 
     // Plan: por dónde empezar hoy, según urgencia
-    var pendientes = tasks.filter(function (t) { return !t.done; })
+    var pendientes = tasks.filter(function (t) { return spaceOn(t.cat) && !t.done; })
       .sort(function (a, b) { return urgencyScore(b) - urgencyScore(a); });
     var top = pendientes.slice(0, 3);
     if (top.length) {
@@ -1142,7 +1214,7 @@ body.compacto .status-wrap { margin-top: 8px; }
     // Aviso de días congestionados en las próximas 2 semanas
     var porDia = {}, hoyIso = todayStr(), tope = dateStrPlus(14);
     tasks.forEach(function (t) {
-      if (t.done || !t.due) return;
+      if (!spaceOn(t.cat) || t.done || !t.due) return;
       if (t.due < hoyIso || t.due > tope) return;
       (porDia[t.due] = porDia[t.due] || []).push(t);
     });
@@ -1174,7 +1246,7 @@ body.compacto .status-wrap { margin-top: 8px; }
     var daysInMonth = new Date(y, m + 1, 0).getDate();
     var today = todayStr();
     var byDate = {};
-    tasks.forEach(function (t) { if (t.due) (byDate[t.due] = byDate[t.due] || []).push(t); });
+    tasks.forEach(function (t) { if (t.due && spaceOn(t.cat)) (byDate[t.due] = byDate[t.due] || []).push(t); });
 
     var html = '<div class="cal">' +
       '<div class="cal-head">' +
@@ -1240,23 +1312,28 @@ body.compacto .status-wrap { margin-top: 8px; }
     var b = document.getElementById("clearDone");
     if (b) b.onclick = function () {
       if (!confirm("¿Borrar definitivamente todas las tareas realizadas? No se puede deshacer.")) return;
-      tasks = tasks.filter(function (t) { return !t.done; });
+      tasks = tasks.filter(function (t) { return !t.done || !spaceOn(t.cat); });
       save(); clearTicks(); render();
     };
   }
 
   function renderStats() {
-    var total = tasks.length;
-    var done = tasks.filter(function (t) { return t.done; }).length;
+    var visibles = tasks.filter(function (t) { return spaceOn(t.cat); });
+    var total = visibles.length;
+    var done = visibles.filter(function (t) { return t.done; }).length;
     var pending = total - done;
     var pct = total ? Math.round((done / total) * 100) : 0;
-    var overdue = tasks.filter(function (t) { return !t.done && t.due && t.due < todayStr(); }).length;
-    var enProg = tasks.filter(function (t) { return !t.done && statusFor(t).key !== "sin_revisar"; }).length;
+    var overdue = visibles.filter(function (t) { return !t.done && t.due && t.due < todayStr(); }).length;
+    var enProg = visibles.filter(function (t) { return !t.done && statusFor(t).key !== "sin_revisar"; }).length;
+    var icTotal = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>';
+    var icPend = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>';
+    var icDone = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+    var icProg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>';
     statsEl.innerHTML =
-      stat(total, "Tareas en total") +
-      stat(pending, overdue ? "Pendientes · " + overdue + " atrasada" + (overdue > 1 ? "s" : "") : "Pendientes", overdue ? "danger" : "") +
-      statBar(pct, done + " de " + total + " completadas") +
-      stat(enProg, "En progreso");
+      stat(total, "Tareas en total", "", icTotal) +
+      stat(pending, overdue ? "Pendientes · " + overdue + " atrasada" + (overdue > 1 ? "s" : "") : "Pendientes", overdue ? "danger" : "", icPend) +
+      statBar(pct, done + " de " + total + " completadas", icDone) +
+      stat(enProg, "En progreso", "", icProg);
     renderByMateria();
   }
   // Avance por materia (y por categoría de trabajo)
@@ -1268,6 +1345,7 @@ body.compacto .status-wrap { margin-top: 8px; }
     if (!byMateriaOpen) return;
     var grupos = {};
     tasks.forEach(function (t) {
+      if (!spaceOn(t.cat)) return;
       var k = t.materia ? t.materia : (t.cat === "trabajo" ? "Trabajo" : "Sin materia");
       grupos[k] = grupos[k] || { total: 0, done: 0, pend: 0, atras: 0 };
       grupos[k].total++;
@@ -1289,11 +1367,13 @@ body.compacto .status-wrap { margin-top: 8px; }
     }).join("") + "</div>";
   }
 
-  function stat(num, lbl, cls) {
-    return '<div class="stat"><div class="num"' + (cls === "danger" ? ' style="color:var(--danger)"' : "") + '>' + num + '</div><div class="lbl">' + esc(lbl) + '</div></div>';
+  function stat(num, lbl, cls, icon) {
+    return '<div class="stat">' + (icon ? '<div class="ic"' + (cls === "danger" ? ' style="background:var(--danger-soft);color:var(--danger)"' : "") + '>' + icon + '</div>' : "") +
+      '<div class="num"' + (cls === "danger" ? ' style="color:var(--danger)"' : "") + '>' + num + '</div><div class="lbl">' + esc(lbl) + '</div></div>';
   }
-  function statBar(pct, lbl) {
-    return '<div class="stat"><div class="num">' + pct + '%</div><div class="lbl">' + esc(lbl) + '</div><div class="bar"><i style="width:' + pct + '%"></i></div></div>';
+  function statBar(pct, lbl, icon) {
+    return '<div class="stat">' + (icon ? '<div class="ic" style="background:var(--ok-soft);color:var(--ok)">' + icon + '</div>' : "") +
+      '<div class="num">' + pct + '%</div><div class="lbl">' + esc(lbl) + '</div><div class="bar"><i style="width:' + pct + '%"></i></div></div>';
   }
 
   function cardEl(t) {
@@ -1658,6 +1738,8 @@ body.compacto .status-wrap { margin-top: 8px; }
     if (shotInput) { shotInput.value = ""; }
     if (shotText) { shotText.textContent = "Sube una captura y leo el texto para rellenar"; }
     if (shotStatus) { shotStatus.textContent = ""; shotStatus.className = "shot-status"; }
+    renderDetected([]);
+    updateCatFieldVisibility();
     if (id) {
       var t = byId(id);
       form.fTitle.value = t.title;
@@ -1672,11 +1754,28 @@ body.compacto .status-wrap { margin-top: 8px; }
       form.fPeople.value = (t.people || []).join(", ");
     } else {
       form.reset();
-      form.fCat.value = filter !== "todas" ? filter : "universidad";
+      var defCat = (filter === "universidad" || filter === "trabajo") && spaceOn(filter) ? filter : activeSpaces()[0] || "universidad";
+      form.fCat.value = defCat;
       form.fPrio.value = "media";
     }
+    toggleMateriaField();
     overlay.classList.add("open");
     setTimeout(function () { form.fTitle.focus(); }, 50);
+  }
+  function toggleMateriaField() {
+    var mf = document.getElementById("materiaField");
+    if (mf) mf.hidden = form.fCat.value !== "universidad";
+  }
+  // Muestra u oculta el selector de Categoría cuando solo tienes un espacio activo.
+  function updateCatFieldVisibility() {
+    var onU = spaceOn("universidad"), onT = spaceOn("trabajo");
+    var wrap = document.getElementById("catFieldWrap");
+    var row2 = document.getElementById("catPrioField").querySelector(".row2");
+    if (onU && onT) { wrap.hidden = false; row2.classList.remove("single"); }
+    else {
+      wrap.hidden = true; row2.classList.add("single");
+      form.fCat.value = onU ? "universidad" : "trabajo";
+    }
   }
   function closeModal() { overlay.classList.remove("open"); editingId = null; }
 
@@ -1691,7 +1790,7 @@ body.compacto .status-wrap { margin-top: 8px; }
       link: form.fLink.value.trim(),
       repeat: form.fRepeat.value,
       horas: parseFloat(form.fHoras.value) || 0,
-      materia: form.fMateria.value.trim(),
+      materia: form.fCat.value === "universidad" ? form.fMateria.value.trim() : "",
       people: form.fPeople.value.split(",").map(function (p) { return p.trim(); }).filter(Boolean)
     };
     if (!data.title) return;
@@ -1712,12 +1811,29 @@ body.compacto .status-wrap { margin-top: 8px; }
   document.getElementById("addBtn").onclick = function () { openModal(null); };
   document.getElementById("closeModal").onclick = closeModal;
   document.getElementById("cancelBtn").onclick = closeModal;
+  form.fCat.onchange = toggleMateriaField;
   overlay.onclick = function (e) { if (e.target === overlay) closeModal(); };
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") { closeModal(); if (horarioOverlay) horarioOverlay.classList.remove("open"); if (materiasOverlay) materiasOverlay.classList.remove("open"); }
   });
 
   // ---- Toolbar ----
+  var TAB_LABELS = { hoy: "Hoy", todas: "Todas", universidad: "Universidad", trabajo: "Trabajo", calendario: "Calendario", realizadas: "Realizadas" };
+  function renderTabsBar() {
+    normalizeFilter();
+    var onU = spaceOn("universidad"), onT = spaceOn("trabajo");
+    var keys = ["hoy"];
+    if (onU && onT) keys.push("todas");
+    if (onU) keys.push("universidad");
+    if (onT) keys.push("trabajo");
+    keys.push("calendario", "realizadas");
+    var tabsEl = document.getElementById("tabs");
+    tabsEl.innerHTML = keys.map(function (k) {
+      var withCount = k !== "calendario";
+      return '<button class="tab' + (k === filter ? " active" : "") + '" data-cat="' + k + '">' + TAB_LABELS[k] +
+        (withCount ? '<span class="tcount" data-c="' + k + '"></span>' : "") + "</button>";
+    }).join("");
+  }
   document.getElementById("tabs").onclick = function (e) {
     var btn = e.target.closest(".tab"); if (!btn) return;
     document.querySelectorAll(".tab").forEach(function (b) { b.classList.remove("active"); });
@@ -1783,8 +1899,11 @@ body.compacto .status-wrap { margin-top: 8px; }
           if (typeof d.horario !== "undefined") horario = d.horario || null;
           if (Array.isArray(d.horarioData)) horarioData = d.horarioData;
           if (Array.isArray(d.materias) && d.materias.length) MATERIAS = d.materias;
+          if (d.espacios && typeof d.espacios === "object") spaces = Object.assign({ universidad: true, trabajo: true }, d.espacios);
+          if (typeof d.resumenDiario !== "undefined") digestOn = !!d.resumenDiario;
         }
-        save(); saveHorario(); saveHorarioData(); saveMaterias();
+        save(); saveHorario(); saveHorarioData(); saveMaterias(); saveSpaces();
+        try { localStorage.setItem(DIGEST_KEY, digestOn ? "1" : "0"); } catch (err2) {}
         fillMateriasDatalist(); clearTicks(); render();
         alert("Copia restaurada.");
       } catch (err) { alert("El archivo no es una copia válida."); }
@@ -1988,6 +2107,14 @@ body.compacto .status-wrap { margin-top: 8px; }
           horarioData = data.horarioData;
           try { localStorage.setItem(HORARIO_DATA_KEY, JSON.stringify(horarioData)); } catch (e) {}
         }
+        if (data && data.espacios && typeof data.espacios === "object") {
+          spaces = Object.assign({ universidad: true, trabajo: true }, data.espacios);
+          try { localStorage.setItem(SPACES_KEY, JSON.stringify(spaces)); } catch (e) {}
+        }
+        if (data && typeof data.resumenDiario !== "undefined") {
+          digestOn = !!data.resumenDiario;
+          try { localStorage.setItem(DIGEST_KEY, digestOn ? "1" : "0"); } catch (e) {}
+        }
         try { localStorage.setItem(KEY, JSON.stringify(tasks)); } catch (e) {}
         clearTicks(); render();
       });
@@ -2080,10 +2207,11 @@ body.compacto .status-wrap { margin-top: 8px; }
   function fillFromText(text) {
     var lines = text.split("\n").map(function (l) { return l.trim(); }).filter(Boolean);
     var low = text.toLowerCase();
+    var det = []; // lo que vamos detectando, para mostrarlo luego
 
     // Fecha límite: primero la que sigue a "Cierre/Entrega/Vence/Límite".
     var due = findDueDate(text);
-    if (due) form.fDue.value = due;
+    if (due) { form.fDue.value = due; det.push({ k: "Fecha", v: dueLabel({ due: due, done: false }) }); }
 
     // Título: 1) "Asunto"/"Re:" de un correo; 2) el nombre en las migas de pan; 3) primera línea real.
     var title = subjectTitle(lines) || headingFromCrumbs(lines) || firstRealLine(lines) || (lines[0] || "");
@@ -2095,25 +2223,42 @@ body.compacto .status-wrap { margin-top: 8px; }
 
     // Persona: el cliente o solicitante, si el pantallazo lo trae.
     var person = extractPerson(lines);
-    if (person && !form.fPeople.value.trim()) form.fPeople.value = person;
+    if (person && !form.fPeople.value.trim()) { form.fPeople.value = person; det.push({ k: "Persona", v: person }); }
 
     // Categoría por puntaje: cuenta señales de universidad vs. trabajo y gana la mayor.
+    // Si el espacio detectado está apagado, se queda con el que sí tengas activo.
     var uniKW = low.match(/\b(clase|profesor|profesora|universidad|examen|parcial|semestre|c[aá]tedra|materia|laboratorio|ensayo|tesis|taller|aula|corte|docente|sustentaci[oó]n|m[oó]dulo|objetivo de aprendizaje|entregable|r[uú]brica)\b/g) || [];
     var workKW = low.match(/\b(pqr|ticket|requerimiento|soporte|cliente|factura|cuenta contable|contable|odoo|egresos|recibos|asunto|remitente|coordinador|auxiliar|woden|colaborador|etapa|solicito|cordialmente|saludos cordiales|reporte|informe|oficina|jefe|reuni[oó]n)\b/g) || [];
     if (/\[ext\]/.test(low)) workKW.push("ext");
-    if (workKW.length > uniKW.length) form.fCat.value = "trabajo";
-    else if (uniKW.length > workKW.length) form.fCat.value = "universidad";
+    var catDetectada = workKW.length > uniKW.length ? "trabajo" : (uniKW.length > workKW.length ? "universidad" : "");
+    if (catDetectada && spaceOn(catDetectada)) {
+      form.fCat.value = catDetectada;
+      det.push({ k: "Categoría", v: catDetectada === "trabajo" ? "Trabajo" : "Universidad" });
+    }
+    toggleMateriaField();
 
     // Materia: para universidad, la deduce y la ajusta a tu lista si coincide.
     if (form.fCat.value === "universidad") {
       var materia = matchMateria(extractMateria(lines));
-      if (materia) form.fMateria.value = materia;
+      if (materia) { form.fMateria.value = materia; det.push({ k: "Materia", v: materia }); }
     }
 
     // Prioridad: lee "Prioridad baja/media/alta" o palabras de urgencia.
     var pm = low.match(/prioridad\s+(alta|media|baja)/);
-    if (pm) form.fPrio.value = pm[1];
-    else if (/\b(urgente|inmediato|prioridad alta|importante|hoy)\b/.test(low)) form.fPrio.value = "alta";
+    if (pm) { form.fPrio.value = pm[1]; det.push({ k: "Prioridad", v: cap(pm[1]) }); }
+    else if (/\b(urgente|inmediato|prioridad alta|importante|hoy)\b/.test(low)) { form.fPrio.value = "alta"; det.push({ k: "Prioridad", v: "Alta" }); }
+
+    renderDetected(det);
+  }
+
+  // Muestra, como chips, lo que el lector entendió del pantallazo (así ves si acertó).
+  function renderDetected(det) {
+    var box = document.getElementById("detectedBox");
+    if (!box) return;
+    if (!det.length) { box.hidden = true; box.innerHTML = ""; return; }
+    box.hidden = false;
+    box.innerHTML = '<span class="detected-label">Detecté:</span>' +
+      det.map(function (d) { return '<span class="detected-chip">' + esc(d.k) + ': <b>' + esc(d.v) + '</b></span>'; }).join("");
   }
 
   // Busca el asunto de un correo (línea "Asunto:" o que empieza por "Re:/Fwd:").
@@ -2259,6 +2404,37 @@ body.compacto .status-wrap { margin-top: 8px; }
   }
 
   var MESES_ES = { enero: 1, febrero: 2, marzo: 3, abril: 4, mayo: 5, junio: 6, julio: 7, agosto: 8, septiembre: 9, setiembre: 9, octubre: 10, noviembre: 11, diciembre: 12 };
+  var DIAS_SEM = { domingo: 0, lunes: 1, martes: 2, "miércoles": 3, miercoles: 3, jueves: 4, viernes: 5, "sábado": 6, sabado: 6 };
+  // Entiende fechas dichas de forma relativa ("mañana", "el viernes", "próximo lunes"),
+  // siempre que aparezcan cerca de una palabra que indique que es la fecha de entrega.
+  function findRelativeDate(text) {
+    var low = text.toLowerCase();
+    var cue = "(entrega|vence|cierre|hasta|para el|para la|antes de|fecha l[ií]mite|l[ií]mite|sustentaci[oó]n)";
+    var hoyD = new Date(); hoyD.setHours(0, 0, 0, 0);
+    function toIso(d) { return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()); }
+    if (new RegExp(cue + "[^.\\n]{0,25}pasado\\s+ma[ñn]ana", "i").test(low) || /\bpasado\s+ma[ñn]ana\b/.test(low)) {
+      var d2 = new Date(hoyD); d2.setDate(d2.getDate() + 2); return toIso(d2);
+    }
+    if (new RegExp(cue + "[^.\\n]{0,25}\\bma[ñn]ana\\b", "i").test(low) || /\bpara\s+ma[ñn]ana\b/.test(low)) {
+      var d1 = new Date(hoyD); d1.setDate(d1.getDate() + 1); return toIso(d1);
+    }
+    if (new RegExp(cue + "[^.\\n]{0,25}\\bhoy\\b", "i").test(low) || /\bpara\s+hoy\b/.test(low)) {
+      return toIso(hoyD);
+    }
+    var diaMatch = low.match(/(pr[oó]ximo|pr[oó]xima|este|esta)?\s*\b(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\b/);
+    if (diaMatch && new RegExp(cue, "i").test(low)) {
+      var target = DIAS_SEM[diaMatch[2]];
+      if (target !== undefined) {
+        var addWeek = /pr[oó]ximo|pr[oó]xima/.test(diaMatch[1] || "") ? 1 : 0;
+        var delta = (target - hoyD.getDay() + 7) % 7;
+        if (delta === 0) delta = 7;
+        delta += addWeek * 7;
+        var d3 = new Date(hoyD); d3.setDate(d3.getDate() + delta);
+        return toIso(d3);
+      }
+    }
+    return "";
+  }
   function findDueDate(text) {
     function iso(d, mes, y) { var m = MESES_ES[String(mes).toLowerCase()]; return m ? (y + "-" + pad2(m) + "-" + pad2(d)) : ""; }
     // 1) fecha en español que sigue a una palabra de entrega
@@ -2268,7 +2444,10 @@ body.compacto .status-wrap { margin-top: 8px; }
     var re = /(\d{1,2})\s+de\s+([a-záéíóú]+)\s+de\s+(\d{4})/ig, m, last = null;
     while ((m = re.exec(text))) last = m;
     if (last) { var r2 = iso(last[1], last[2], last[3]); if (r2) return r2; }
-    // 3) formatos numéricos
+    // 3) fechas relativas: "mañana", "pasado mañana", "hoy", días de la semana
+    var rel = findRelativeDate(text);
+    if (rel) return rel;
+    // 4) formatos numéricos
     var isoNum = text.match(/(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
     if (isoNum) return isoNum[1] + "-" + pad2(isoNum[2]) + "-" + pad2(isoNum[3]);
     var dmy = text.match(/\b(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})\b/);
@@ -2288,20 +2467,43 @@ body.compacto .status-wrap { margin-top: 8px; }
   materiasOverlay.onclick = function (e) { if (e.target === materiasOverlay) materiasOverlay.classList.remove("open"); };
 
   function openMaterias() { renderMateriasBody(); materiasOverlay.classList.add("open"); }
+  function switchRow(id, label, desc, checked) {
+    return '<div class="sw-row"><div><div class="sw-label">' + label + '</div>' +
+      (desc ? '<div class="sw-desc">' + desc + '</div>' : '') + '</div>' +
+      '<button type="button" class="sw' + (checked ? ' on' : '') + '" id="' + id + '" role="switch" aria-checked="' + (checked ? 'true' : 'false') + '"><span class="sw-knob"></span></button></div>';
+  }
   function renderMateriasBody() {
+    var onU = spaceOn("universidad"), onT = spaceOn("trabajo");
     var rows = MATERIAS.map(function (m, i) {
       return '<div class="mrow"><span>' + esc(m) + '</span><button class="mrem" data-mrem="' + i + '" title="Quitar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>';
     }).join("");
     materiasBody.innerHTML =
-      (MATERIAS.length ? '<div class="mlist">' + rows + '</div>' : '<p class="horario-empty">No tienes materias. Agrega la primera.</p>') +
-      '<div class="addsub" style="margin-top:14px"><input id="newMateria" placeholder="Nueva materia..."><button id="addMateriaBtn">Agregar</button></div>' +
-      '<div class="hz-img-section"><div class="hz-sub">Recordatorios</div>' +
+      '<div class="settings-section">' +
+        '<div class="settings-h"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Espacios</div>' +
+        switchRow("swUni", "Universidad", "Materias, horario y tareas de clase", onU) +
+        switchRow("swTra", "Trabajo", "Tickets, reuniones y entregas laborales", onT) +
+      '</div>' +
+      (onU ? '<div class="settings-section">' +
+        '<div class="settings-h"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Mis materias</div>' +
+        (MATERIAS.length ? '<div class="mlist">' + rows + '</div>' : '<p class="horario-empty">No tienes materias. Agrega la primera.</p>') +
+        '<div class="addsub" style="margin-top:10px"><input id="newMateria" placeholder="Nueva materia..."><button id="addMateriaBtn">Agregar</button></div>' +
+      '</div>' : '') +
+      '<div class="settings-section">' +
+        '<div class="settings-h"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Recordatorios</div>' +
         '<div class="remind-row">Avisarme con ' +
           '<select id="remindSel">' + [0, 1, 2, 3, 5, 7].map(function (n) {
             return '<option value="' + n + '"' + (n === remindDays ? " selected" : "") + '>' + (n === 0 ? "el mismo día" : n === 1 ? "1 día" : n + " días") + "</option>";
           }).join("") + "</select> de antelación</div>" +
-        '<p class="today-none" style="margin-top:8px">Se aplica al aviso de arriba y a las notificaciones del navegador.</p>' +
+        switchRow("swDigest", "Resumen cada mañana", "Una notificación con el plan del día, si ya diste permiso de avisos", digestOn) +
+        '<p class="today-none" style="margin-top:4px">El aviso de arriba y las notificaciones del navegador usan la antelación que elijas.</p>' +
       "</div>";
+    var su = document.getElementById("swUni"); if (su) su.onclick = function () { toggleSpace("universidad"); };
+    var st = document.getElementById("swTra"); if (st) st.onclick = function () { toggleSpace("trabajo"); };
+    var sd = document.getElementById("swDigest"); if (sd) sd.onclick = function () {
+      digestOn = !digestOn;
+      try { localStorage.setItem(DIGEST_KEY, digestOn ? "1" : "0"); } catch (e) {}
+      renderMateriasBody();
+    };
     materiasBody.querySelectorAll("[data-mrem]").forEach(function (b) {
       b.onclick = function () {
         MATERIAS.splice(parseInt(b.dataset.mrem, 10), 1);
@@ -2309,14 +2511,16 @@ body.compacto .status-wrap { margin-top: 8px; }
       };
     });
     var ni = document.getElementById("newMateria"), ab = document.getElementById("addMateriaBtn");
-    function add() {
-      var v = ni.value.trim();
-      if (v && MATERIAS.indexOf(v) === -1) { MATERIAS.push(v); saveMaterias(); fillMateriasDatalist(); }
-      renderMateriasBody();
-      var nn = document.getElementById("newMateria"); if (nn) nn.focus();
+    if (ni && ab) {
+      var add = function () {
+        var v = ni.value.trim();
+        if (v && MATERIAS.indexOf(v) === -1) { MATERIAS.push(v); saveMaterias(); fillMateriasDatalist(); }
+        renderMateriasBody();
+        var nn = document.getElementById("newMateria"); if (nn) nn.focus();
+      };
+      ab.onclick = add;
+      ni.onkeydown = function (e) { if (e.key === "Enter") { e.preventDefault(); add(); } };
     }
-    ab.onclick = add;
-    ni.onkeydown = function (e) { if (e.key === "Enter") { e.preventDefault(); add(); } };
     var rs = document.getElementById("remindSel");
     if (rs) rs.onchange = function () {
       remindDays = parseInt(rs.value, 10) || 0;
@@ -2334,7 +2538,8 @@ body.compacto .status-wrap { margin-top: 8px; }
   horarioOverlay.onclick = function (e) { if (e.target === horarioOverlay) horarioOverlay.classList.remove("open"); };
 
   function openHorario() { horarioEditIndex = -1; renderHorarioBody(); horarioOverlay.classList.add("open"); }
-  var HZ_COLORS = ["#0ea5e9", "#f59e0b", "#8b5cf6", "#10b981", "#ef4444", "#6366f1", "#ec4899"];
+  // Sin el rojo de "atrasada" (--danger), para que un punto de materia nunca se confunda con una entrega vencida.
+  var HZ_COLORS = ["#0ea5e9", "#f59e0b", "#8b5cf6", "#10b981", "#14b8a6", "#6366f1", "#ec4899"];
   function hzColor(m) {
     var idx = MATERIAS.indexOf(m);
     if (idx < 0) { var h = 0; for (var i = 0; i < (m || "").length; i++) h += m.charCodeAt(i); idx = h; }
@@ -2497,13 +2702,40 @@ body.compacto .status-wrap { margin-top: 8px; }
   }
   // Avisa (notificación del navegador) de tareas que vencen en 2 días o menos.
   // Solo funciona con la app abierta y una vez al día por tarea.
+  // Resumen de la mañana: una sola notificación al día con por dónde empezar.
+  function checkDailyDigest() {
+    if (!digestOn || !("Notification" in window) || Notification.permission !== "granted") return;
+    var today = todayStr(), last = "";
+    try { last = localStorage.getItem(LAST_DIGEST_KEY) || ""; } catch (e) {}
+    if (last === today) return;
+    if (new Date().getHours() < 6) return; // nada de madrugada
+    var pend = tasks.filter(function (t) { return spaceOn(t.cat) && !t.done; })
+      .sort(function (a, b) { return urgencyScore(b) - urgencyScore(a); });
+    try { localStorage.setItem(LAST_DIGEST_KEY, today); } catch (e) {}
+    if (!pend.length) return;
+    var top = pend[0];
+    var overdueN = pend.filter(function (t) { return t.due && t.due < today; }).length;
+    var todayN = pend.filter(function (t) { return t.due === today; }).length;
+    var d = new Date().getDay(), idx = d === 0 ? -9 : d - 1;
+    var clasesHoy = horarioData.filter(function (c) { return c.dia === idx; }).length;
+    var partes = [];
+    if (overdueN) partes.push(overdueN + " atrasada" + (overdueN > 1 ? "s" : ""));
+    if (todayN) partes.push(todayN + " para hoy");
+    if (clasesHoy) partes.push(clasesHoy + " clase" + (clasesHoy > 1 ? "s" : "") + " hoy");
+    try {
+      new Notification('Tu día: empieza por "' + top.title + '"', {
+        body: (partes.length ? partes.join(" · ") + ". " : "") + "Abre la app para ver el plan completo.",
+        tag: "resumen-diario"
+      });
+    } catch (e) {}
+  }
   function checkReminders(force) {
     if (!("Notification" in window) || Notification.permission !== "granted") return;
     var today = todayStr(), plus2 = dateStrPlus(remindDays);
     var seen = {};
     try { seen = JSON.parse(localStorage.getItem(NOTIF_KEY) || "{}"); } catch (e) {}
     tasks.forEach(function (t) {
-      if (t.done || !t.due || t.due > plus2) return;          // solo vencidas o dentro de 2 días
+      if (!spaceOn(t.cat) || t.done || !t.due || t.due > plus2) return;          // solo vencidas o dentro de 2 días
       if (!force && seen[t.id] === today) return;             // ya avisado hoy
       var cuando = t.due < today ? "atrasada" : (t.due === today ? "vence hoy" : "vence pronto");
       try {
@@ -2578,10 +2810,17 @@ body.compacto .status-wrap { margin-top: 8px; }
 
   // Al volver a la pestaña, renueva el acceso en silencio para no cerrar la sesión.
   document.addEventListener("visibilitychange", function () {
-    if (!document.hidden && gated && driveFileId) {
-      ensureToken().catch(function () {});
+    if (!document.hidden) {
+      renderAlert(); renderTabCounts(); checkReminders(false); checkDailyDigest();
+      if (gated && driveFileId) ensureToken().catch(function () {});
     }
   });
+  // Revisión periódica: si dejas la app abierta, los avisos y recordatorios
+  // se mantienen al día sin que tengas que tocar nada (cada 5 minutos).
+  setInterval(function () {
+    renderAlert(); renderStats(); renderTabCounts();
+    checkReminders(false); checkDailyDigest();
+  }, 5 * 60 * 1000);
 
   // Arranque: con Client ID exigimos login (puerta); sin él, modo local.
   if (gated) {

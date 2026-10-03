@@ -1,6 +1,6 @@
 # Mis Tareas
 
-Una app para organizar tus tareas de universidad y de trabajo en un mismo lugar. Registra el tiempo que dedicas, lleva el control del avance y te avisa de lo que se vence. Es un sitio estático: un solo `index.html`, sin servidor propio. Funciona sola y no depende de Claude ni de ninguna licencia.
+Una app para organizar tus tareas de universidad y de trabajo, cada una en su espacio. Decide qué conviene hacer primero, lleva el control del avance y te avisa de lo que se vence. Es un sitio estático: un solo `index.html`, sin servidor propio. Funciona sola y no depende de Claude ni de ninguna licencia.
 
 ## Cómo usarla
 
@@ -8,14 +8,15 @@ Abre `index.html` con doble clic y listo. También puedes subirla a Netlify (ver
 
 ## Qué puedes hacer
 
+- **Universidad y Trabajo como espacios independientes**, cada uno con su color (azul y ámbar) en las pestañas. Si solo usas uno, apaga el otro desde Ajustes: desaparece de las pestañas, del formulario y de las estadísticas, sin perder lo que ya tenías si lo vuelves a encender.
 - Crear tareas con título, detalle, categoría (Universidad o Trabajo), prioridad y fecha límite.
 - Asignar personas a cada tarea, no solo a ti. Se ven como iniciales en la tarjeta y puedes buscarlas por nombre.
 - Dividir cada tarea en pasos (checklist). El avance se calcula solo según los pasos que marcas.
 - Escribir una nota en cada paso para dejar constancia de qué se hizo.
 - Varias notas por tarea, con fecha. Al cambiar de estado te pregunta si **ocultar** las notas de la etapa anterior o **mantenerlas**; las ocultas quedan guardadas y se pueden volver a ver.
-- Cronometrar el tiempo por tarea con play y pausa. Solo corre un cronómetro a la vez para que el total sea real.
+- Estado por etapas (Sin revisar, Revisado, Iniciada, A la mitad, Casi lista, Terminada), con una barra de color que muestra el avance.
 - Ver un aviso arriba cuando hay tareas atrasadas o para hoy.
-- Crear una tarea desde un pantallazo: subes la captura, se lee el texto y se rellenan los campos. Luego revisas y ajustas.
+- Crear una tarea desde un pantallazo: subes la captura, se lee el texto y se rellenan los campos. Entiende también fechas dichas de forma relativa ("mañana", "pasado mañana", "el próximo lunes"). Después de leerla, te muestra en chips **qué detectó** (categoría, fecha, prioridad, materia, persona) para que lo revises de un vistazo antes de guardar.
 - **Orden sugerido** (el que trae por defecto): calcula qué conviene hacer primero combinando la fecha límite, la prioridad, lo que ya llevas empezado y el tiempo estimado.
 - Las tareas se agrupan en bloques: **Atrasadas, Para hoy, Esta semana, Más adelante y Sin fecha**.
 - **Plan del día** en la vista Hoy: las 3 tareas por las que conviene empezar, con el motivo de cada una y cuántas horas suman frente a las horas de clase que tienes ese día.
@@ -32,6 +33,7 @@ Abre `index.html` con doble clic y listo. También puedes subirla a Netlify (ver
 - Vista compacta para ver muchas tareas de un vistazo, y "Marcar todos" los pasos de golpe.
 - Contadores en las pestañas y atajos de teclado (N para nueva tarea, / para buscar).
 - Elegir con cuánta antelación quieres el aviso (mismo día, 1, 2, 3, 5 o 7 días).
+- **Resumen cada mañana** (opcional): una sola notificación con tu tarea más urgente y cuántas clases tienes hoy. Los avisos y recordatorios se revisan solos cada pocos minutos mientras tienes la app abierta, así no dependen de que hagas algo para refrescarse.
 - Buscar, filtrar por materia y ordenar por fecha, prioridad, progreso o materia. Tema claro y oscuro.
 - Ver la fecha con aviso claro: "hoy", "mañana", "en 2 días" o "atrasada 3 días".
 - Ver tu horario recreado como tabla semanal editable (botón "Horario"): agregar, editar y quitar clases con día, hora y salón. También puedes subir el pantallazo original.
